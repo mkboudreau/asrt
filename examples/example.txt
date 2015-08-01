@@ -1,0 +1,3 @@
+GET www.microsoft.com
+GET www.yahoo.com 200
+GET www.dallascowboys.com/helloworld 404
