@@ -1,7 +1,7 @@
 # API Simple Reporting Tool (ASRT)
 
 ## Summary
-This tool has a simple goal: Report up/down status of API endpoints.
+API Simple Reporting Tool (ASRT) tool has a simple goal: Report up/down status of API endpoints.
 
 ## Description
 ASRT (pronounced assert) was created to simply report on api endpoint statuses. It is not intended to be a stress tester like other tools, such as vegeta. It is just meant to be a simple reporter that a dashboard like tool could use.
