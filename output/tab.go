@@ -2,6 +2,8 @@ package output
 
 import (
 	"fmt"
+	"io"
+	"strings"
 )
 
 const (
@@ -13,16 +15,38 @@ const (
 	fmtTabPretty = "%v%v%v\t%v%v%v\t%v%v%v\n"
 )
 
-func WriteToTab(result *Result) {
+type TabResultFormatter struct {
+	Modifiers *ResultFormatModifiers
+}
+
+func NewTabResultFormatter(m *ResultFormatModifiers) *TabResultFormatter {
+	return &TabResultFormatter{Modifiers: m}
+}
+
+func (rf *TabResultFormatter) AggregateReader(result []*Result) io.Reader {
+	return rf.Reader(result[0])
+}
+
+func (rf *TabResultFormatter) Reader(result *Result) io.Reader {
+	var s string
+	if rf.Modifiers.Pretty {
+		s = tabResultPrettyString(result)
+	} else {
+		s = tabResultString(result)
+	}
+
+	return strings.NewReader(s)
+}
+func tabResultString(result *Result) string {
 	status := result.Success
 	if result.Error != nil {
 		status = false
 	}
 
-	fmt.Printf(fmtTabRaw, status, result.Expected, result.Url)
+	return fmt.Sprintf(fmtTabRaw, status, result.Expected, result.Url)
 }
 
-func WriteToTabPretty(result *Result) {
+func tabResultPrettyString(result *Result) string {
 	statusColor := colorGreen
 	statusText := statusTextOk
 	if !result.Success {
@@ -41,5 +65,5 @@ func WriteToTabPretty(result *Result) {
 	bUrl := ""
 	aUrl := ""
 
-	fmt.Printf(fmtTabPretty, bStatus, statusText, aStatus, bExpected, result.Expected, aExpected, bUrl, result.Url, aUrl)
+	return fmt.Sprintf(fmtTabPretty, bStatus, statusText, aStatus, bExpected, result.Expected, aExpected, bUrl, result.Url, aUrl)
 }

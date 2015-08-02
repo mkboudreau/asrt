@@ -1,55 +1,42 @@
 package output
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
+	"io"
 	"log"
 )
 
-const (
-	fmtJsonRaw string = "%v,%v,%v\n"
-
-	// three sections: status text, expected value, url
-	// for each section:
-	// structure: color before, data, color after, comma
-	fmtJsonPretty = "%v%v%v,%v%v%v,%v%v%v\n"
-)
-
-func WriteToJson(result *Result) {
-	b, err := json.Marshal(result)
-	if err != nil {
-		log.Println("could not marshall json error:", err)
-	} else {
-		fmt.Println(string(b))
-	}
+type JsonResultFormatter struct {
+	Modifiers *ResultFormatModifiers
 }
 
-func WriteToJsonPretty(result *Result) {
-	b, err := json.MarshalIndent(&result, "", "\t")
-	if err != nil {
-		log.Println("could not marshall json error:", err)
+func NewJsonResultFormatter(m *ResultFormatModifiers) *JsonResultFormatter {
+	return &JsonResultFormatter{Modifiers: m}
+}
+
+func (rf *JsonResultFormatter) AggregateReader(result []*Result) io.Reader {
+	return rf.Reader(result[0])
+}
+
+func (rf *JsonResultFormatter) Reader(result *Result) io.Reader {
+	var b []byte
+	var err error
+	if rf.Modifiers.Pretty {
+		b, err = jsonResultPrettyString(result)
 	} else {
-		fmt.Println(string(b))
+		b, err = jsonResultString(result)
 	}
-	/*
-		statusColor := colorGreen
-		statusText := statusTextOk
-		if !result.Success {
-			statusColor = colorRed
-			statusText = statusTextNotOk
-		}
-		if result.Error != nil {
-			statusColor = colorRed
-			statusText = statusTextError
-		}
+	if err != nil {
+		log.Printf("Could not get io.Reader for result: %v", err)
+		return nil
+	}
+	return bytes.NewReader(b)
+}
 
-		bStatus := statusColor
-		aStatus := colorReset
-		bExpected := ""
-		aExpected := ""
-		bUrl := ""
-		aUrl := ""
-
-		fmt.Printf(fmtJsonPretty, bStatus, statusText, aStatus, bExpected, result.Expected, aExpected, bUrl, result.Url, aUrl)
-	*/
+func jsonResultPrettyString(result *Result) ([]byte, error) {
+	return json.MarshalIndent(result, "", "\t")
+}
+func jsonResultString(result *Result) ([]byte, error) {
+	return json.Marshal(result)
 }

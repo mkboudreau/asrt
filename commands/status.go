@@ -1,9 +1,12 @@
 package commands
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/execution"
 	"github.com/mkboudreau/asrt/output"
+	"io"
 	"log"
 	"strconv"
 	"sync"
@@ -16,8 +19,6 @@ func cmdStatus(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	outputFunction := getOutputFunction(config)
-
 	targetChannel := make(chan *target, config.Workers)
 	resultChannel := make(chan *output.Result)
 
@@ -28,53 +29,42 @@ func cmdStatus(c *cli.Context) {
 	}
 	close(targetChannel)
 
+	formatter := getResultFormatter(config)
 	if config.AggregateOutput {
-		processAggregatedResult(resultChannel, config.Quiet, outputFunction)
+		processAggregatedResult(resultChannel, formatter)
 	} else {
-		processEachResult(resultChannel, config.Quiet, outputFunction)
+		processEachResult(resultChannel, formatter)
 	}
 }
 
-func processEachResult(resultChannel <-chan *output.Result, quiet bool, outputFunction func(result *output.Result)) {
-	for r := range resultChannel {
-		if quiet {
-			result := &output.Result{
-				Success:  r.Success,
-				Error:    r.Error,
-				Expected: "",
-				Url:      "",
-			}
-			outputFunction(result)
-		} else {
-			outputFunction(r)
+func consoleWriter(r io.Reader) {
+	reader := bufio.NewReader(r)
+	for {
+		line, err := reader.ReadString('\n')
+		if line != "" {
+			fmt.Print(line)
+		}
+		if err != nil {
+			break
 		}
 	}
 }
 
-func processAggregatedResult(resultChannel <-chan *output.Result, quiet bool, outputFunction func(result *output.Result)) {
-	result := &output.Result{
-		Success:  true,
-		Error:    nil,
-		Expected: "",
-		Url:      "",
-	}
-	count := 0
+func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter) {
 	for r := range resultChannel {
-		if !r.Success {
-			result.Success = false
-		}
-		if r.Error != nil {
-			result.Success = false
-			result.Error = r.Error
-		}
-		count = count + 1
+		reader := formatter.Reader(r)
+		consoleWriter(reader)
+	}
+}
+
+func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter) {
+	results := make([]*output.Result, 0)
+	for r := range resultChannel {
+		results = append(results, r)
 	}
 
-	if !quiet {
-		result.Expected = strconv.Itoa(count)
-	}
-
-	outputFunction(result)
+	reader := formatter.AggregateReader(results)
+	consoleWriter(reader)
 }
 
 func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output.Result) {
@@ -94,35 +84,21 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 	close(resultChannel)
 }
 
-func getOutputFunction(config *configuration) func(result *output.Result) {
-	var fn func(result *output.Result)
+func getResultFormatter(config *configuration) output.ResultFormatter {
+	modifiers := &output.ResultFormatModifiers{
+		Pretty:    config.Pretty,
+		Aggregate: config.AggregateOutput,
+		Quiet:     config.Quiet,
+	}
 
 	switch {
 	case config.Output == formatJSON:
-		if config.Pretty {
-			fn = output.WriteToJsonPretty
-		} else {
-			fn = output.WriteToJson
-		}
-	case config.Quiet:
-		if config.Pretty {
-			fn = output.WriteToQuietPretty
-		} else {
-			fn = output.WriteToQuiet
-		}
+		return output.NewJsonResultFormatter(modifiers)
 	case config.Output == formatCSV:
-		if config.Pretty {
-			fn = output.WriteToCsvPretty
-		} else {
-			fn = output.WriteToCsv
-		}
+		return output.NewCsvResultFormatter(modifiers)
 	case config.Output == formatTAB:
-		if config.Pretty {
-			fn = output.WriteToTabPretty
-		} else {
-			fn = output.WriteToTab
-		}
+		return output.NewTabResultFormatter(modifiers)
 	}
 
-	return fn
+	return nil
 }

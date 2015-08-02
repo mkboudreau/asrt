@@ -1,5 +1,9 @@
 package output
 
+import (
+	"io"
+)
+
 const (
 	colorGreen  string = "\033[1;32m"
 	colorRed           = "\033[1;31m"
@@ -26,4 +30,15 @@ func NewResult(success bool, err error, expected string, url string) *Result {
 		Expected: expected,
 		Url:      url,
 	}
+}
+
+type ResultFormatter interface {
+	Reader(result *Result) io.Reader
+	AggregateReader(result []*Result) io.Reader
+}
+
+type ResultFormatModifiers struct {
+	Pretty    bool
+	Aggregate bool
+	Quiet     bool
 }
