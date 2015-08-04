@@ -7,20 +7,20 @@ import (
 )
 
 func init() {
-	turnOffLogging()
+	TurnOffLogging()
 	for _, f := range os.Args {
 		if f == "-d" || f == "--debug" || f == "-debug" {
-			turnOnLogging()
+			TurnOnLogging()
 		}
 	}
 }
 
-func turnOffLogging() io.Writer {
+func TurnOffLogging() io.Writer {
 	w := &noopWriter{}
 	log.SetOutput(w)
 	return w
 }
-func turnOnLogging() io.Writer {
+func TurnOnLogging() io.Writer {
 	w := os.Stdout
 	log.SetOutput(w)
 	return w
