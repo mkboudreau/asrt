@@ -4,7 +4,7 @@
 API Simple Reporting Tool (ASRT) tool has a simple goal: Report up/down status of API endpoints.
 
 ## Description
-ASRT (pronounced assert) was created to simply report on api endpoint statuses. It is not intended to be a stress tester like other tools, such as vegeta. It is just meant to be a simple reporter that a dashboard like tool could use.
+ASRT (pronounced assert) was created to simply report on api endpoint statuses. It is not intended to be a stress tester like other tools, such as vegeta. It is just meant to be a simple reporter that a dashboard like tool could use. It can be easily integrated with any build processes. Not only is the output easily parseable (especitally with cut), but it also sets the exit status to 1 if it is not 100% successful.
 
 ## Installation
 
@@ -41,8 +41,8 @@ GET www.google.com 200
 
 ### Main Commands
 - status
-- dashboard (not implemented)
-- server (not implemented)
+- dashboard (not implemented yet)
+- server (not implemented yet)
 
 ### Options
 - `-d` or `--debug`: turns on the logger
@@ -53,7 +53,7 @@ GET www.google.com 200
 - `-a` or `--aggregate`: aggregates all sites into a single true/false response. includes the total sites unless -q is specified
 - `-q` or `--quiet`: makes response only show true/false.
 - `-w` or `--workers`: this is the number of workers or goroutines used to connect to the client sites.
-- `-m` or `--method`: the method to be used for all urls given on the command line. valid values are GET,POST,PUT,DELETE,HEAD,PATCH. default is GET.
+- `-m` or `--method`: the method to be used for all urls given on the command line. valid values are GET,POST,PUT,DELETE,HEAD,PATCH. default is GET. (not implemented yet)
 
 ### Input File Format
 - Each line must contain a method and a url. 
