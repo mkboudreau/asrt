@@ -7,12 +7,19 @@ import (
 )
 
 const (
-	fmtCsvRaw string = "%v,%v,%v\n"
+	// pretty strings have three sections:
+	// 1. before color
+	// 2. test
+	// 3. after color
 
-	// three sections: status text, expected value, url
-	// for each section:
-	// structure: color before, data, color after, comma
-	fmtCsvPretty = "%v%v%v,%v%v%v,%v%v%v\n"
+	fmtCsvRaw    string = "%v,%v,%v\n"
+	fmtCsvPretty        = "%v%v%v,%v%v%v,%v%v%v\n"
+
+	fmtCsvQuietRaw    = "%v\n"
+	fmtCsvQuietPretty = "%v%v%v\n"
+
+	fmtCsvAggregateRaw    = "%v,%v\n"
+	fmtCsvAggregatePretty = "%v%v%v,%v%v%v\n"
 )
 
 type CsvResultFormatter struct {
@@ -23,17 +30,45 @@ func NewCsvResultFormatter(m *ResultFormatModifiers) *CsvResultFormatter {
 	return &CsvResultFormatter{Modifiers: m}
 }
 func (rf *CsvResultFormatter) AggregateReader(result []*Result) io.Reader {
-	return rf.Reader(result[0])
-}
-func (rf *CsvResultFormatter) Reader(result *Result) io.Reader {
 	var s string
-	if rf.Modifiers.Pretty {
-		s = csvResultPrettyString(result)
-	} else {
-		s = csvResultString(result)
+
+	switch {
+	case !rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
+		s = csvAggregateResultString(result)
+	case rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
+		s = csvAggregateResultPrettyString(result)
+	case !rf.Modifiers.Pretty && rf.Modifiers.Quiet:
+		s = csvAggregateQuietResultString(result)
+	case rf.Modifiers.Pretty && rf.Modifiers.Quiet:
+		s = csvAggregateQuietResultPrettyString(result)
 	}
 
 	return strings.NewReader(s)
+}
+func (rf *CsvResultFormatter) Reader(result *Result) io.Reader {
+	var s string
+
+	switch {
+	case !rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
+		s = csvResultString(result)
+	case rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
+		s = csvResultPrettyString(result)
+	case !rf.Modifiers.Pretty && rf.Modifiers.Quiet:
+		s = csvQuietResultString(result)
+	case rf.Modifiers.Pretty && rf.Modifiers.Quiet:
+		s = csvQuietResultPrettyString(result)
+	}
+
+	return strings.NewReader(s)
+}
+
+func csvResultString(result *Result) string {
+	status := result.Success
+	if result.Error != nil {
+		status = false
+	}
+
+	return fmt.Sprintf(fmtCsvRaw, status, result.Expected, result.Url)
 }
 
 func csvResultPrettyString(result *Result) string {
@@ -57,11 +92,75 @@ func csvResultPrettyString(result *Result) string {
 
 	return fmt.Sprintf(fmtCsvPretty, bStatus, statusText, aStatus, bExpected, result.Expected, aExpected, bUrl, result.Url, aUrl)
 }
-func csvResultString(result *Result) string {
+
+func csvAggregateResultString(results []*Result) string {
+	aggResult := newAggregateResult(results)
+	return fmt.Sprintf(fmtCsvAggregateRaw, aggResult.Success, aggResult.Success)
+}
+
+func csvAggregateResultPrettyString(results []*Result) string {
+
+	aggResult := newAggregateResult(results)
+
+	statusColor := colorGreen
+	statusText := statusTextOk
+	if !aggResult.Success {
+		statusColor = colorRed
+		statusText = statusTextNotOk
+	}
+
+	bStatus := statusColor
+	aStatus := colorReset
+	bCount := ""
+	aCount := ""
+
+	return fmt.Sprintf(fmtCsvAggregatePretty, bStatus, statusText, aStatus, bCount, aggResult.Count, aCount)
+}
+
+func csvQuietResultString(result *Result) string {
 	status := result.Success
 	if result.Error != nil {
 		status = false
 	}
 
-	return fmt.Sprintf(fmtCsvRaw, status, result.Expected, result.Url)
+	return fmt.Sprintf(fmtCsvQuietRaw, status)
+}
+
+func csvQuietResultPrettyString(result *Result) string {
+	statusColor := colorGreen
+	statusText := statusTextOk
+	if !result.Success {
+		statusColor = colorRed
+		statusText = statusTextNotOk
+	}
+	if result.Error != nil {
+		statusColor = colorRed
+		statusText = statusTextError
+	}
+
+	bStatus := statusColor
+	aStatus := colorReset
+
+	return fmt.Sprintf(fmtCsvQuietPretty, bStatus, statusText, aStatus)
+}
+
+func csvAggregateQuietResultString(results []*Result) string {
+	aggResult := newAggregateQuietResult(results)
+	return fmt.Sprintf(fmtCsvQuietRaw, aggResult.Success)
+}
+
+func csvAggregateQuietResultPrettyString(results []*Result) string {
+	aggResult := newAggregateQuietResult(results)
+
+	statusColor := colorGreen
+	statusText := statusTextOk
+	if !aggResult.Success {
+		statusColor = colorRed
+		statusText = statusTextNotOk
+	}
+
+	bStatus := statusColor
+	aStatus := colorReset
+
+	return fmt.Sprintf(fmtCsvQuietPretty, bStatus, statusText, aStatus)
 }

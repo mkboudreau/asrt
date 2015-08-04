@@ -15,18 +15,32 @@ func NewJsonResultFormatter(m *ResultFormatModifiers) *JsonResultFormatter {
 	return &JsonResultFormatter{Modifiers: m}
 }
 
-func (rf *JsonResultFormatter) AggregateReader(result []*Result) io.Reader {
-	return rf.Reader(result[0])
+func (rf *JsonResultFormatter) AggregateReader(results []*Result) io.Reader {
+	if rf.Modifiers.Quiet {
+		return rf.getReaderForInterface(newAggregateQuietResult(results))
+	} else {
+		return rf.getReaderForInterface(newAggregateResult(results))
+	}
 }
 
 func (rf *JsonResultFormatter) Reader(result *Result) io.Reader {
+	if rf.Modifiers.Quiet {
+		return rf.getReaderForInterface(newQuietResult(result))
+	} else {
+		return rf.getReaderForInterface(result)
+	}
+}
+
+func (rf *JsonResultFormatter) getReaderForInterface(obj interface{}) io.Reader {
 	var b []byte
 	var err error
+
 	if rf.Modifiers.Pretty {
-		b, err = jsonResultPrettyString(result)
+		b, err = jsonResultPrettyString(obj)
 	} else {
-		b, err = jsonResultString(result)
+		b, err = jsonResultString(obj)
 	}
+
 	if err != nil {
 		log.Printf("Could not get io.Reader for result: %v", err)
 		return nil
@@ -34,9 +48,9 @@ func (rf *JsonResultFormatter) Reader(result *Result) io.Reader {
 	return bytes.NewReader(b)
 }
 
-func jsonResultPrettyString(result *Result) ([]byte, error) {
-	return json.MarshalIndent(result, "", "\t")
-}
-func jsonResultString(result *Result) ([]byte, error) {
+func jsonResultString(result interface{}) ([]byte, error) {
 	return json.Marshal(result)
+}
+func jsonResultPrettyString(result interface{}) ([]byte, error) {
+	return json.MarshalIndent(result, "", "\t")
 }

@@ -42,3 +42,40 @@ type ResultFormatModifiers struct {
 	Aggregate bool
 	Quiet     bool
 }
+
+type quietResult struct {
+	Success bool `json:"success,omitempty"`
+}
+
+type quietAggregateResult struct {
+	Success bool `json:"success,omitempty"`
+}
+
+type aggregateResult struct {
+	Success bool `json:"success,omitempty"`
+	Count   int  `json:"count,omitempty"`
+}
+
+func newQuietResult(result *Result) *quietResult {
+	return &quietResult{Success: result.Success}
+}
+
+func newAggregateQuietResult(results []*Result) *quietAggregateResult {
+	success := true
+	for _, r := range results {
+		if !r.Success {
+			success = false
+		}
+	}
+	return &quietAggregateResult{Success: success}
+}
+
+func newAggregateResult(results []*Result) *aggregateResult {
+	success := true
+	for _, r := range results {
+		if !r.Success {
+			success = false
+		}
+	}
+	return &aggregateResult{Success: success, Count: len(results)}
+}
