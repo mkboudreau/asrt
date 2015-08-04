@@ -8,6 +8,7 @@ import (
 	"github.com/mkboudreau/asrt/output"
 	"io"
 	"log"
+	"os"
 	"strconv"
 	"sync"
 )
@@ -30,11 +31,14 @@ func cmdStatus(c *cli.Context) {
 	close(targetChannel)
 
 	formatter := getResultFormatter(config)
+	var exitStatus int
 	if config.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter)
+		exitStatus = processAggregatedResult(resultChannel, formatter)
 	} else {
-		processEachResult(resultChannel, formatter)
+		exitStatus = processEachResult(resultChannel, formatter)
 	}
+
+	os.Exit(exitStatus)
 }
 
 func consoleWriter(r io.Reader) {
@@ -50,21 +54,33 @@ func consoleWriter(r io.Reader) {
 	}
 }
 
-func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter) {
+func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter) int {
+	exitStatus := 0
 	for r := range resultChannel {
 		reader := formatter.Reader(r)
+		if !r.Success {
+			exitStatus = 1
+		}
 		consoleWriter(reader)
 	}
+
+	return exitStatus
 }
 
-func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter) {
+func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter) int {
+	exitStatus := 0
 	results := make([]*output.Result, 0)
 	for r := range resultChannel {
 		results = append(results, r)
+		if !r.Success {
+			exitStatus = 1
+		}
 	}
 
 	reader := formatter.AggregateReader(results)
 	consoleWriter(reader)
+
+	return exitStatus
 }
 
 func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output.Result) {
