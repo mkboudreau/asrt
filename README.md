@@ -43,7 +43,7 @@ This tool is simple. Just dive in and start using it.
 
 - Read from a file and refresh every 1 minute with pretty print json
 
-`asrt status -p -fmt json -r 1m -f sites.list`
+`asrt dashboard -p -fmt json -r 1m -f sites.list`
 
 Example File
 ```
