@@ -19,17 +19,23 @@ This tool is simple. Just dive in and start using it.
 - Add pretty printing
 `asrt status -p www.yahoo.com`
 
+- Refresh every 5 seconds
+`asrt dashboard -p -r 5s www.yahoo.com`
+
 - Change format to csv
 `asrt status -p -fmt csv www.yahoo.com`
 
 - Change format to json
 `asrt status -p -fmt json www.yahoo.com`
 
-- Add a site to the list
+- Add a site to the list and pretty print json
 `asrt status -p -fmt json www.yahoo.com www.google.com`
 
-- Read from a file
+- Read from a file and pretty print json
 `asrt status -p -fmt json -f sites.list`
+
+- Read from a file and refresh every 1 minute with pretty print json
+`asrt status -p -fmt json -r 1m -f sites.list`
 
 Example File
 ```
@@ -41,7 +47,7 @@ GET www.google.com 200
 
 ### Main Commands
 - status
-- dashboard (not implemented yet)
+- dashboard
 - server (not implemented yet)
 
 ### Options
