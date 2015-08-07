@@ -35,7 +35,9 @@ This tool is simple. Just dive in and start using it.
 `asrt status -p -fmt json -f sites.list`
 
 - Read from a file and refresh every 1 minute with pretty print json
-`asrt status -p -fmt json -r 1m -f sites.list`
+```bash
+asrt status -p -fmt json -r 1m -f sites.list
+```
 
 Example File
 ```
