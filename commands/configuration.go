@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/mkboudreau/asrt/output"
 	"io"
 	"log"
 	"net/url"
@@ -123,6 +124,25 @@ func getTimeDurationConfig(c *cli.Context, key string) time.Duration {
 		log.Printf("Could not parse duration %v, defaulting to %v", v, d)
 	}
 	return d
+}
+
+func getResultFormatter(config *configuration) output.ResultFormatter {
+	modifiers := &output.ResultFormatModifiers{
+		Pretty:    config.Pretty,
+		Aggregate: config.AggregateOutput,
+		Quiet:     config.Quiet,
+	}
+
+	switch {
+	case config.Output == formatJSON:
+		return output.NewJsonResultFormatter(modifiers)
+	case config.Output == formatCSV:
+		return output.NewCsvResultFormatter(modifiers)
+	case config.Output == formatTAB:
+		return output.NewTabResultFormatter(modifiers)
+	}
+
+	return nil
 }
 
 func buildTargetsFromFile(c *cli.Context) ([]*target, error) {
