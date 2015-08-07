@@ -14,15 +14,19 @@ ASRT (pronounced assert) was created to simply report on api endpoint statuses. 
 This tool is simple. Just dive in and start using it.
 
 - Simple tab delimited status
+
 `asrt status www.yahoo.com`
 
 - Add pretty printing
+
 `asrt status -p www.yahoo.com`
 
 - Refresh every 5 seconds
+
 `asrt dashboard -p -r 5s www.yahoo.com`
 
 - Change format to csv
+
 `asrt status -p -fmt csv www.yahoo.com`
 
 - Change format to json
@@ -31,15 +35,15 @@ This tool is simple. Just dive in and start using it.
 
 - Add a site to the list and pretty print json
 
-    asrt status -p -fmt json www.yahoo.com www.google.com`
+`asrt status -p -fmt json www.yahoo.com www.google.com`
 
 - Read from a file and pretty print json
-    asrt status -p -fmt json -f sites.list`
+
+`asrt status -p -fmt json -f sites.list`
 
 - Read from a file and refresh every 1 minute with pretty print json
-```bash
-asrt status -p -fmt json -r 1m -f sites.list
-```
+
+`asrt status -p -fmt json -r 1m -f sites.list`
 
 Example File
 ```
