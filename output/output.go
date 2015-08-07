@@ -17,7 +17,7 @@ const (
 )
 
 type Result struct {
-	Success  bool   `json:"success,omitempty"`
+	Success  bool   `json:"ok"`
 	Error    error  `json:"error,omitempty"`
 	Expected string `json:"expectation,omitempty"`
 	Url      string `json:"url,omitempty"`
@@ -44,15 +44,15 @@ type ResultFormatModifiers struct {
 }
 
 type quietResult struct {
-	Success bool `json:"success,omitempty"`
+	Success bool `json:"ok"`
 }
 
 type quietAggregateResult struct {
-	Success bool `json:"success,omitempty"`
+	Success bool `json:"ok"`
 }
 
 type aggregateResult struct {
-	Success bool `json:"success,omitempty"`
+	Success bool `json:"ok"`
 	Count   int  `json:"count,omitempty"`
 }
 
