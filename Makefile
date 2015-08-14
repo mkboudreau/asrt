@@ -1,4 +1,4 @@
-all: deps build
+all: clean deps build
 
 build:
 	go fmt ./...
@@ -17,7 +17,7 @@ tools:
 	go get github.com/golang/lint/golint
 	go get github.com/ryancox/gobench2plot
 clean:
-	rm -rf reports/
+	rm -rf reports/ ./asrt
 bench:
 	go test ./... -bench=.
 bench-report: report-dir
