@@ -90,7 +90,6 @@ func getConfiguration(c *cli.Context) (*configuration, error) {
 	config.Rate = getTimeDurationConfig(c, "rate")
 
 	if file == "" && len(c.Args()) == 0 {
-		//cli.ShowCommandHelp(c, "status")
 		return nil, ErrInvalidTargets
 	}
 
@@ -222,8 +221,6 @@ func (config *configuration) getSlackWriter() io.Writer {
 		icon := config.context.String("slack-icon")
 		w.SlackIconUrl(output.SlackIconUrl(icon))
 	}
-
-	fmt.Println(w.Payload)
 
 	return w
 }
