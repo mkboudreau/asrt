@@ -14,12 +14,15 @@ const (
 
 	fmtCsvRaw    string = "%v,%v,%v\n"
 	fmtCsvPretty        = "%v%v%v,%v%v%v,%v%v%v\n"
+	fmtCsvMd            = "*%v*,%v,%v\n"
 
 	fmtCsvQuietRaw    = "%v\n"
 	fmtCsvQuietPretty = "%v%v%v\n"
+	fmtCsvQuietMd     = "*%v*\n"
 
 	fmtCsvAggregateRaw    = "%v,%v\n"
 	fmtCsvAggregatePretty = "%v%v%v,%v%v%v\n"
+	fmtCsvAggregateMd     = "*%v*,%v\n"
 )
 
 type CsvResultFormatter struct {
@@ -33,6 +36,10 @@ func (rf *CsvResultFormatter) AggregateReader(result []*Result) io.Reader {
 	var s string
 
 	switch {
+	case rf.Modifiers.Markdown && !rf.Modifiers.Quiet:
+		s = csvAggregateResultMarkdownString(result)
+	case rf.Modifiers.Markdown && rf.Modifiers.Quiet:
+		s = csvAggregateQuietResultMarkdownString(result)
 	case !rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
 		s = csvAggregateResultString(result)
 	case rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
@@ -49,6 +56,10 @@ func (rf *CsvResultFormatter) Reader(result *Result) io.Reader {
 	var s string
 
 	switch {
+	case rf.Modifiers.Markdown && !rf.Modifiers.Quiet:
+		s = csvResultMarkdownString(result)
+	case rf.Modifiers.Markdown && rf.Modifiers.Quiet:
+		s = csvQuietResultMarkdownString(result)
 	case !rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
 		s = csvResultString(result)
 	case rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
@@ -163,4 +174,41 @@ func csvAggregateQuietResultPrettyString(results []*Result) string {
 	aStatus := colorReset
 
 	return fmt.Sprintf(fmtCsvQuietPretty, bStatus, statusText, aStatus)
+}
+
+func csvResultMarkdownString(result *Result) string {
+	statusText := statusTextOk
+	if !result.Success {
+		statusText = statusTextNotOk
+	}
+	if result.Error != nil {
+		statusText = statusTextError
+	}
+
+	return fmt.Sprintf(fmtCsvMd, statusText, result.Expected, result.Url)
+}
+
+func csvQuietResultMarkdownString(result *Result) string {
+	status := result.Success
+	if result.Error != nil {
+		status = false
+	}
+
+	return fmt.Sprintf(fmtCsvQuietMd, status)
+}
+
+func csvAggregateResultMarkdownString(results []*Result) string {
+	aggResult := newAggregateResult(results)
+
+	statusText := statusTextOk
+	if !aggResult.Success {
+		statusText = statusTextNotOk
+	}
+
+	return fmt.Sprintf(fmtCsvAggregateMd, statusText, aggResult.Count)
+}
+
+func csvAggregateQuietResultMarkdownString(results []*Result) string {
+	aggResult := newAggregateQuietResult(results)
+	return fmt.Sprintf(fmtCsvQuietMd, aggResult.Success)
 }
