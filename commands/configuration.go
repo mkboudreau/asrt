@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -152,6 +153,17 @@ func (config *configuration) ResultFormatter() output.ResultFormatter {
 }
 
 func (config *configuration) Writer() io.Writer {
+	writers := config.getConfigurationWriters()
+	return newProxyWriteCloser(writers...)
+}
+
+func (config *configuration) WriterWithWriters(writers ...io.Writer) io.Writer {
+	configWriters := config.getConfigurationWriters()
+	configWriters = append(configWriters, writers...)
+	return newProxyWriteCloser(configWriters...)
+}
+
+func (config *configuration) getConfigurationWriters() []io.Writer {
 	writers := make([]io.Writer, 0)
 
 	main := config.getMainWriter()
@@ -163,8 +175,7 @@ func (config *configuration) Writer() io.Writer {
 	if slack != nil {
 		writers = append(writers, slack)
 	}
-
-	return newProxyWriteCloser(writers...)
+	return writers
 }
 
 type proxyWriteCloser struct {
@@ -184,7 +195,11 @@ func (pwc *proxyWriteCloser) Write(p []byte) (n int, err error) {
 }
 
 func (pwc *proxyWriteCloser) Close() error {
+	typeOfStdout := reflect.TypeOf(os.Stdout).String()
 	for _, w := range pwc.writers {
+		if reflect.TypeOf(w).String() == typeOfStdout {
+			continue
+		}
 		if c, ok := w.(io.Closer); ok {
 			if err := c.Close(); err != nil {
 				return err
@@ -201,6 +216,7 @@ func (config *configuration) getMainWriter() io.Writer {
 	case "dashboard":
 		return os.Stdout
 	case "server":
+		return os.Stdout
 	}
 	return nil
 }

@@ -1,34 +1,118 @@
 package commands
 
 import (
+	"bytes"
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/codegangsta/cli"
-	//"log"
+	"github.com/mkboudreau/asrt/output"
 )
 
 func cmdServer(c *cli.Context) {
-	/*
-		config, err := getConfiguration(c)
-		if err != nil {
-			cli.ShowCommandHelp(c, "status")
-			log.Fatal(err)
+	config, err := getConfiguration(c)
+	if err != nil {
+		cli.ShowCommandHelp(c, "server")
+		fmt.Println("Could not get configuration. Reason:", err)
+		log.Fatalln("Exiting....")
+	}
+
+	if c.String("port") == "" {
+		cli.ShowCommandHelp(c, "server")
+		fmt.Println("Missing port")
+		log.Fatalln("Exiting....")
+	}
+
+	asrt := NewAsrtHandler(config)
+	asrt.refreshServerCache()
+	go asrt.loopServerCacheRefresh()
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", c.String("port")), asrt))
+}
+
+type AsrtHandler struct {
+	config        *configuration
+	cachedContent []byte
+	buffer        *bytes.Buffer
+	mutex         *sync.RWMutex
+}
+
+func NewAsrtHandler(c *configuration) *AsrtHandler {
+	return &AsrtHandler{config: c, mutex: &sync.RWMutex{}}
+}
+
+func (asrt *AsrtHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	contentType := "text/plain"
+	if asrt.config.Output == formatJSON {
+		contentType = "application/json"
+	}
+
+	asrt.mutex.RLock()
+	if asrt.cachedContent == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	} else {
+		w.Header().Set("Content-Type", contentType)
+		w.Write(asrt.cachedContent)
+	}
+	asrt.mutex.RUnlock()
+}
+
+func (asrt *AsrtHandler) loopServerCacheRefresh() {
+	done := make(chan struct{})
+	fn := func() {
+		close(done)
+	}
+
+	osSignalShutdown(fn, 5)
+
+	ticker := time.NewTicker(asrt.config.Rate)
+
+	for {
+		select {
+		case <-ticker.C:
+			asrt.refreshServerCache()
+		case <-done:
+			return
 		}
+	}
+}
 
-		outputFunction := getOutputFunction(config)
+func (asrt *AsrtHandler) refreshServerCache() {
+	targetChannel := make(chan *target, asrt.config.Workers)
+	resultChannel := make(chan *output.Result)
 
-		targetChannel := make(chan *target, config.Workers)
-		resultChannel := make(chan *output.Result)
+	go processTargets(targetChannel, resultChannel)
 
-		go processTargets(targetChannel, resultChannel)
+	for _, target := range asrt.config.Targets {
+		targetChannel <- target
+	}
+	close(targetChannel)
 
-		for _, target := range config.Targets {
-			targetChannel <- target
-		}
-		close(targetChannel)
+	formatter := asrt.config.ResultFormatter()
+	writer := asrt.config.WriterWithWriters(asrt)
 
-		if config.AggregateOutput {
-			processAggregatedResult(resultChannel, config.Quiet, outputFunction)
-		} else {
-			processEachResult(resultChannel, config.Quiet, outputFunction)
-		}
-	*/
+	if asrt.config.AggregateOutput {
+		processAggregatedResult(resultChannel, formatter, writer)
+	} else {
+		processEachResult(resultChannel, formatter, writer)
+	}
+}
+
+func (asrt *AsrtHandler) Write(p []byte) (n int, err error) {
+	if asrt.buffer == nil {
+		asrt.buffer = new(bytes.Buffer)
+	}
+
+	return asrt.buffer.Write(p)
+}
+
+func (asrt *AsrtHandler) Close() error {
+	asrt.mutex.Lock()
+	asrt.cachedContent = asrt.buffer.Bytes()
+	asrt.buffer = nil
+	asrt.mutex.Unlock()
+	return nil
 }

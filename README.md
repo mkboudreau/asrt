@@ -45,6 +45,10 @@ This tool is simple. Just dive in and start using it.
 
 `asrt dashboard -p -fmt json -r 1m -f sites.list`
 
+- Read from a file and expose online with data refresh every 1 minute
+
+`asrt server -fmt json -r 1m -f sites.list`
+
 Example File
 ```
 GET www.yahoo.com 
@@ -56,7 +60,7 @@ GET www.google.com 200
 ### Main Commands
 - status
 - dashboard
-- server (not implemented yet)
+- server
 
 ### Options
 - `-d` or `--debug`: turns on the logger
@@ -70,6 +74,7 @@ GET www.google.com 200
 - `-md` or `--markdown`: makes response have some formatting using markdown. Mutually exclusive with pretty.
 - `-w` or `--workers`: this is the number of workers or goroutines used to connect to the client sites.
 - `-m` or `--method`: the method to be used for all urls given on the command line. valid values are GET,POST,PUT,DELETE,HEAD,PATCH. default is GET. (not implemented yet)
+- `--port`: set port to listen on (only works with server command). default is 7070
 - `--slack-url`: setting this parameter enables slack integration using incoming webhook url specified.
 - `--slack-user`: overrides the user this tool will post as to slack. only works if slack-url is specified.
 - `--slack-channel`: overrides the channel this tool will post to on slack. only works if slack-url is specified.
@@ -91,8 +96,7 @@ GET www.google.com 200
 
 The following items are still outstanding:
 - Add support for headers, both as an option and from within a file
+- Implement `-m` option for customizing the method 
 - Add more tests!
 - Add ability to pipe input 
-- Add dashboard that loops and rewrites/repaints the screen
-- Add http server to it can report its findings outside the terminal
 

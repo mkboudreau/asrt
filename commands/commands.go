@@ -10,6 +10,11 @@ var validFormats = []string{"CSV", "TAB", "JSON"}
 var validMethods = []string{"GET", "PUT", "POST", "DELETE", "HEAD", "PATCH"}
 
 var statusFlags = []cli.Flag{
+	cli.BoolFlag{
+		EnvVar: "DEBUG",
+		Name:   "debug, d",
+		Usage:  "Enable debug logging mode",
+	},
 	cli.StringFlag{
 		Name:  "timeout, t",
 		Usage: "Timeout for client to wait for connections. 0 = no timeout. Format is Golang time.Duration.",
@@ -76,6 +81,13 @@ var dashboardFlags = append(statusFlags,
 		Value: "30s",
 	})
 
+var serverFlags = append(dashboardFlags,
+	cli.StringFlag{
+		Name:  "port",
+		Usage: "Port to listen on",
+		Value: "7070",
+	})
+
 var Commands = []cli.Command{
 	{
 		Name:        "status",
@@ -90,6 +102,13 @@ var Commands = []cli.Command{
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdDashboard,
 		Flags:       dashboardFlags,
+	},
+	{
+		Name:        "server",
+		Usage:       "Listen on a port for requests",
+		Description: "Argument is one ore more URLs if a file is not provided.",
+		Action:      cmdServer,
+		Flags:       serverFlags,
 	},
 }
 

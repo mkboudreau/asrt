@@ -22,13 +22,5 @@ func main() {
 	app.Usage = "API Status Reporting Tool"
 	app.Version = version.Version + " (" + version.GitCommit + ")"
 
-	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			EnvVar: "DEBUG",
-			Name:   "debug, d",
-			Usage:  "Enable debug logging mode",
-		},
-	}
-
 	app.Run(os.Args)
 }
