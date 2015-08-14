@@ -106,18 +106,6 @@ func tabResultPrettyString(result *Result) string {
 	return fmt.Sprintf(fmtTabPretty, bStatus, statusText, aStatus, bExpected, result.Expected, aExpected, bUrl, result.Url, aUrl)
 }
 
-func tabResultMarkdownString(result *Result) string {
-	statusText := statusTextOk
-	if !result.Success {
-		statusText = statusTextNotOk
-	}
-	if result.Error != nil {
-		statusText = statusTextError
-	}
-
-	return fmt.Sprintf(fmtTabMd, statusText, result.Expected, result.Url)
-}
-
 func tabQuietResultString(result *Result) string {
 	status := result.Success
 	if result.Error != nil {
@@ -125,14 +113,6 @@ func tabQuietResultString(result *Result) string {
 	}
 
 	return fmt.Sprintf(fmtTabQuietRaw, status)
-}
-func tabQuietResultMarkdownString(result *Result) string {
-	status := result.Success
-	if result.Error != nil {
-		status = false
-	}
-
-	return fmt.Sprintf(fmtTabQuietMd, status)
 }
 
 func tabQuietResultPrettyString(result *Result) string {
@@ -176,23 +156,9 @@ func tabAggregateResultPrettyString(results []*Result) string {
 
 	return fmt.Sprintf(fmtTabAggregatePretty, bStatus, statusText, aStatus, bCount, aggResult.Count, aCount)
 }
-func tabAggregateResultMarkdownString(results []*Result) string {
-	aggResult := newAggregateResult(results)
-
-	statusText := statusTextOk
-	if !aggResult.Success {
-		statusText = statusTextNotOk
-	}
-
-	return fmt.Sprintf(fmtTabAggregateMd, statusText, aggResult.Count)
-}
 func tabAggregateQuietResultString(results []*Result) string {
 	aggResult := newAggregateQuietResult(results)
 	return fmt.Sprintf(fmtTabQuietRaw, aggResult.Success)
-}
-func tabAggregateQuietResultMarkdownString(results []*Result) string {
-	aggResult := newAggregateQuietResult(results)
-	return fmt.Sprintf(fmtTabQuietMd, aggResult.Success)
 }
 
 func tabAggregateQuietResultPrettyString(results []*Result) string {
@@ -209,4 +175,41 @@ func tabAggregateQuietResultPrettyString(results []*Result) string {
 	aStatus := colorReset
 
 	return fmt.Sprintf(fmtTabQuietPretty, bStatus, statusText, aStatus)
+}
+
+func tabResultMarkdownString(result *Result) string {
+	statusText := statusTextOk
+	if !result.Success {
+		statusText = statusTextNotOk
+	}
+	if result.Error != nil {
+		statusText = statusTextError
+	}
+
+	return fmt.Sprintf(fmtTabMd, statusText, result.Expected, result.Url)
+}
+
+func tabQuietResultMarkdownString(result *Result) string {
+	status := result.Success
+	if result.Error != nil {
+		status = false
+	}
+
+	return fmt.Sprintf(fmtTabQuietMd, status)
+}
+
+func tabAggregateResultMarkdownString(results []*Result) string {
+	aggResult := newAggregateResult(results)
+
+	statusText := statusTextOk
+	if !aggResult.Success {
+		statusText = statusTextNotOk
+	}
+
+	return fmt.Sprintf(fmtTabAggregateMd, statusText, aggResult.Count)
+}
+
+func tabAggregateQuietResultMarkdownString(results []*Result) string {
+	aggResult := newAggregateQuietResult(results)
+	return fmt.Sprintf(fmtTabQuietMd, aggResult.Success)
 }
