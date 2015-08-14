@@ -8,6 +8,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/output"
+	"github.com/mkboudreau/asrt/writer"
 )
 
 func cmdDashboard(c *cli.Context) {
@@ -43,7 +44,7 @@ func loopDashboard(config *configuration) {
 }
 
 func printDashboard(config *configuration) {
-	output.ClearConsole()
+	writer.ClearConsole()
 
 	var timeReader io.Reader
 	if config.Pretty {
@@ -51,7 +52,7 @@ func printDashboard(config *configuration) {
 	} else {
 		timeReader = output.NewTimeReader(time.Now())
 	}
-	output.WriteToConsole(timeReader)
+	writer.WriteToConsole(timeReader)
 
 	targetChannel := make(chan *target, config.Workers)
 	resultChannel := make(chan *output.Result)

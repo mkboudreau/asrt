@@ -7,6 +7,7 @@ import (
 
 	"github.com/mkboudreau/asrt/execution"
 	"github.com/mkboudreau/asrt/output"
+	"github.com/mkboudreau/asrt/writer"
 )
 
 func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output.Result) {
@@ -26,23 +27,23 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 	close(resultChannel)
 }
 
-func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, writer io.Writer) int {
+func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer) int {
 	exitStatus := 0
-	output.WriteToWriter(writer, formatter.Header())
+	writer.WriteToWriter(w, formatter.Header())
 	for r := range resultChannel {
 		reader := formatter.Reader(r)
 		if !r.Success {
 			exitStatus = 1
 		}
-		output.WriteToWriter(writer, reader)
+		writer.WriteToWriter(w, reader)
 	}
-	output.WriteToWriter(writer, formatter.Footer())
-	output.DoneWithWriter(writer)
+	writer.WriteToWriter(w, formatter.Footer())
+	writer.DoneWithWriter(w)
 
 	return exitStatus
 }
 
-func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, writer io.Writer) int {
+func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer) int {
 	exitStatus := 0
 	results := make([]*output.Result, 0)
 	for r := range resultChannel {
@@ -53,10 +54,10 @@ func processAggregatedResult(resultChannel <-chan *output.Result, formatter outp
 	}
 
 	reader := formatter.AggregateReader(results)
-	output.WriteToWriter(writer, formatter.Header())
-	output.WriteToWriter(writer, reader)
-	output.WriteToWriter(writer, formatter.Footer())
-	output.DoneWithWriter(writer)
+	writer.WriteToWriter(w, formatter.Header())
+	writer.WriteToWriter(w, reader)
+	writer.WriteToWriter(w, formatter.Footer())
+	writer.DoneWithWriter(w)
 
 	return exitStatus
 }

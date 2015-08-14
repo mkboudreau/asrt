@@ -14,6 +14,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/output"
+	"github.com/mkboudreau/asrt/writer"
 )
 
 var (
@@ -209,7 +210,7 @@ func (config *configuration) getSlackWriter() io.Writer {
 		return nil
 	}
 
-	w := output.NewSlackWriter(config.context.String("slack-url"))
+	w := writer.NewSlackWriter(config.context.String("slack-url"))
 
 	if config.context.String("slack-channel") != "" {
 		w.SlackChannel(config.context.String("slack-channel"))
@@ -219,7 +220,7 @@ func (config *configuration) getSlackWriter() io.Writer {
 	}
 	if config.context.String("slack-icon") != "" {
 		icon := config.context.String("slack-icon")
-		w.SlackIconUrl(output.SlackIconUrl(icon))
+		w.SlackIconUrl(writer.SlackIconUrl(icon))
 	}
 
 	return w
