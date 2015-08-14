@@ -32,6 +32,36 @@ type CsvResultFormatter struct {
 func NewCsvResultFormatter(m *ResultFormatModifiers) *CsvResultFormatter {
 	return &CsvResultFormatter{Modifiers: m}
 }
+
+func (rf *CsvResultFormatter) Header() io.Reader {
+	if !rf.Modifiers.Quiet {
+		if rf.Modifiers.Markdown {
+			if rf.Modifiers.Aggregate {
+				return strings.NewReader("*RESULT*,*COUNT*\n")
+			} else {
+				return strings.NewReader("*RESULT*,*EXPECT*,*URL*\n")
+			}
+		} else if rf.Modifiers.Pretty {
+			if rf.Modifiers.Aggregate {
+				return strings.NewReader(fmt.Sprintf("%vRESULT%v,%vCOUNT%v\n", colorYellow, colorReset, colorYellow, colorReset))
+			} else {
+				return strings.NewReader(fmt.Sprintf("%vRESULT%v,%vEXPECT%v,%vURL%v\n", colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset))
+			}
+		} else {
+			if rf.Modifiers.Aggregate {
+				return strings.NewReader("RESULT,COUNT\n")
+			} else {
+				return strings.NewReader("RESULT,EXPECT,URL\n")
+			}
+		}
+	}
+	return strings.NewReader("")
+}
+
+func (rf *CsvResultFormatter) Footer() io.Reader {
+	return strings.NewReader("\n")
+}
+
 func (rf *CsvResultFormatter) AggregateReader(result []*Result) io.Reader {
 	var s string
 

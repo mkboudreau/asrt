@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"strings"
 )
 
 type JsonResultFormatter struct {
@@ -13,6 +14,29 @@ type JsonResultFormatter struct {
 
 func NewJsonResultFormatter(m *ResultFormatModifiers) *JsonResultFormatter {
 	return &JsonResultFormatter{Modifiers: m}
+}
+
+func (rf *JsonResultFormatter) Header() io.Reader {
+	if !rf.Modifiers.Aggregate {
+		if rf.Modifiers.Pretty {
+			return strings.NewReader("[\n")
+		} else {
+			return strings.NewReader("[")
+		}
+	}
+	return strings.NewReader("")
+}
+
+func (rf *JsonResultFormatter) Footer() io.Reader {
+	if !rf.Modifiers.Aggregate {
+		if rf.Modifiers.Pretty {
+			return strings.NewReader("\n]\n")
+		} else {
+			return strings.NewReader("]\n")
+		}
+
+	}
+	return strings.NewReader("\n")
 }
 
 func (rf *JsonResultFormatter) AggregateReader(results []*Result) io.Reader {

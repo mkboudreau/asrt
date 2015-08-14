@@ -28,6 +28,7 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 
 func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, writer io.Writer) int {
 	exitStatus := 0
+	output.WriteToWriter(writer, formatter.Header())
 	for r := range resultChannel {
 		reader := formatter.Reader(r)
 		if !r.Success {
@@ -35,6 +36,7 @@ func processEachResult(resultChannel <-chan *output.Result, formatter output.Res
 		}
 		output.WriteToWriter(writer, reader)
 	}
+	output.WriteToWriter(writer, formatter.Footer())
 	output.DoneWithWriter(writer)
 
 	return exitStatus
@@ -51,7 +53,9 @@ func processAggregatedResult(resultChannel <-chan *output.Result, formatter outp
 	}
 
 	reader := formatter.AggregateReader(results)
+	output.WriteToWriter(writer, formatter.Header())
 	output.WriteToWriter(writer, reader)
+	output.WriteToWriter(writer, formatter.Footer())
 	output.DoneWithWriter(writer)
 
 	return exitStatus

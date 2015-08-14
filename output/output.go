@@ -35,6 +35,8 @@ func NewResult(success bool, err error, expected string, url string) *Result {
 type ResultFormatter interface {
 	Reader(result *Result) io.Reader
 	AggregateReader(result []*Result) io.Reader
+	Header() io.Reader
+	Footer() io.Reader
 }
 
 type ResultFormatModifiers struct {
