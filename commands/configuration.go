@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/codegangsta/cli"
-	"github.com/mkboudreau/asrt/output"
 	"io"
 	"log"
 	"net/url"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/codegangsta/cli"
+	"github.com/mkboudreau/asrt/output"
 )
 
 var (
@@ -48,11 +49,14 @@ const (
 )
 
 type configuration struct {
+	context         *cli.Context
+	CommandName     string
 	Rate            time.Duration
 	Output          outputFormat
 	Pretty          bool
 	AggregateOutput bool
 	Quiet           bool
+	Markdown        bool
 	Workers         int
 	Targets         []*target
 }
@@ -69,11 +73,12 @@ type commandMethod string
 type outputFormat string
 
 func getConfiguration(c *cli.Context) (*configuration, error) {
-	config := &configuration{Targets: make([]*target, 0)}
+	config := &configuration{context: c, CommandName: c.Command.Name, Targets: make([]*target, 0)}
 
 	config.Pretty = c.Bool("pretty")
 	config.AggregateOutput = c.Bool("aggregate")
 	config.Quiet = c.Bool("quiet")
+	config.Markdown = c.Bool("markdown")
 	config.Workers = c.Int("workers")
 	file := c.String("file")
 
@@ -85,7 +90,7 @@ func getConfiguration(c *cli.Context) (*configuration, error) {
 	config.Rate = getTimeDurationConfig(c, "rate")
 
 	if file == "" && len(c.Args()) == 0 {
-		cli.ShowCommandHelp(c, "status")
+		//cli.ShowCommandHelp(c, "status")
 		return nil, ErrInvalidTargets
 	}
 
@@ -126,11 +131,12 @@ func getTimeDurationConfig(c *cli.Context, key string) time.Duration {
 	return d
 }
 
-func getResultFormatter(config *configuration) output.ResultFormatter {
+func (config *configuration) ResultFormatter() output.ResultFormatter {
 	modifiers := &output.ResultFormatModifiers{
 		Pretty:    config.Pretty,
 		Aggregate: config.AggregateOutput,
 		Quiet:     config.Quiet,
+		Markdown:  config.Markdown,
 	}
 
 	switch {
@@ -143,6 +149,83 @@ func getResultFormatter(config *configuration) output.ResultFormatter {
 	}
 
 	return nil
+}
+
+func (config *configuration) Writer() io.Writer {
+	writers := make([]io.Writer, 0)
+
+	main := config.getMainWriter()
+	if main != nil {
+		writers = append(writers, main)
+	}
+
+	slack := config.getSlackWriter()
+	if slack != nil {
+		writers = append(writers, slack)
+	}
+
+	return newProxyWriteCloser(writers...)
+}
+
+type proxyWriteCloser struct {
+	writers []io.Writer
+	writer  io.Writer
+}
+
+func newProxyWriteCloser(writers ...io.Writer) *proxyWriteCloser {
+	return &proxyWriteCloser{
+		writers: writers,
+		writer:  io.MultiWriter(writers...),
+	}
+}
+
+func (pwc *proxyWriteCloser) Write(p []byte) (n int, err error) {
+	return pwc.writer.Write(p)
+}
+
+func (pwc *proxyWriteCloser) Close() error {
+	for _, w := range pwc.writers {
+		if c, ok := w.(io.Closer); ok {
+			if err := c.Close(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (config *configuration) getMainWriter() io.Writer {
+	switch config.context.Command.Name {
+	case "status":
+		return os.Stdout
+	case "dashboard":
+		return os.Stdout
+	case "server":
+	}
+	return nil
+}
+
+func (config *configuration) getSlackWriter() io.Writer {
+	if config.context.String("slack-url") == "" {
+		return nil
+	}
+
+	w := output.NewSlackWriter(config.context.String("slack-url"))
+
+	if config.context.String("slack-channel") != "" {
+		w.SlackChannel(config.context.String("slack-channel"))
+	}
+	if config.context.String("slack-user") != "" {
+		w.SlackUser(config.context.String("slack-user"))
+	}
+	if config.context.String("slack-icon") != "" {
+		icon := config.context.String("slack-icon")
+		w.SlackIconUrl(output.SlackIconUrl(icon))
+	}
+
+	fmt.Println(w.Payload)
+
+	return w
 }
 
 func buildTargetsFromFile(c *cli.Context) ([]*target, error) {

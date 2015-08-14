@@ -1,9 +1,9 @@
 package output
 
 import (
-	"bufio"
 	"fmt"
 	"io"
+	"os"
 )
 
 var (
@@ -12,7 +12,17 @@ var (
 )
 
 func WriteToWriter(w io.Writer, r io.Reader) {
+	if _, err := io.Copy(w, r); err != nil {
+		fmt.Sprintf("error writing to writer: %v", err)
+	}
+}
 
+func DoneWithWriter(w io.Writer) {
+	if c, ok := w.(io.Closer); ok {
+		if err := c.Close(); err != nil {
+			fmt.Printf("error closing to write closer: %v", err)
+		}
+	}
 }
 
 func ClearConsole() {
@@ -20,14 +30,5 @@ func ClearConsole() {
 }
 
 func WriteToConsole(r io.Reader) {
-	reader := bufio.NewReader(r)
-	for {
-		line, err := reader.ReadString('\n')
-		if line != "" {
-			fmt.Print(line)
-		}
-		if err != nil {
-			break
-		}
-	}
+	WriteToWriter(os.Stdout, r)
 }

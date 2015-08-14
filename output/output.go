@@ -41,6 +41,7 @@ type ResultFormatModifiers struct {
 	Pretty    bool
 	Aggregate bool
 	Quiet     bool
+	Markdown  bool
 }
 
 type quietResult struct {

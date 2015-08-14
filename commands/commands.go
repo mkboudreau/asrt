@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/codegangsta/cli"
 )
 
@@ -26,7 +27,11 @@ var statusFlags = []cli.Flag{
 	},
 	cli.BoolFlag{
 		Name:  "pretty, p",
-		Usage: "Pretty Print the Output",
+		Usage: "Pretty Print the Output. Note: this is mutually exclusive with the pretty option. markdown always take precedence over pretty",
+	},
+	cli.BoolFlag{
+		Name:  "markdown, md",
+		Usage: "Markdown Output. Note: this is mutually exclusive with the pretty option. markdown always take precedence over pretty",
 	},
 	cli.BoolFlag{
 		Name:  "aggregate, a",
@@ -45,6 +50,22 @@ var statusFlags = []cli.Flag{
 		Name:  "method, m",
 		Usage: fmt.Sprint("Use HTTP Method for all URLs on command line. Does not affect file inputs. Valid values:", validMethods),
 		Value: "GET",
+	},
+	cli.StringFlag{
+		Name:  "slack-url",
+		Usage: "Slack incoming webhook URL. Setting this parameter enables slack notifications",
+	},
+	cli.StringFlag{
+		Name:  "slack-channel",
+		Usage: "Overrides the default channel for slack notifications. slack-url is required to enable slack integration.",
+	},
+	cli.StringFlag{
+		Name:  "slack-user",
+		Usage: "Overrides the username this application posts as for slack notifications. slack-url is required to enable slack integration.",
+	},
+	cli.StringFlag{
+		Name:  "slack-icon",
+		Usage: "Overrides the icon used for this application for slack notifications. slack-url is required to enable slack integration.",
 	},
 }
 
@@ -70,4 +91,14 @@ var Commands = []cli.Command{
 		Action:      cmdDashboard,
 		Flags:       dashboardFlags,
 	},
+}
+
+func CommandNotFound(c *cli.Context, command string) {
+	fmt.Printf(
+		"%s: '%s' is not an %s command. See '%s --help'.\n",
+		c.App.Name,
+		command,
+		c.App.Name,
+		c.App.Name,
+	)
 }

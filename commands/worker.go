@@ -1,10 +1,12 @@
 package commands
 
 import (
-	"github.com/mkboudreau/asrt/execution"
-	"github.com/mkboudreau/asrt/output"
+	"io"
 	"strconv"
 	"sync"
+
+	"github.com/mkboudreau/asrt/execution"
+	"github.com/mkboudreau/asrt/output"
 )
 
 func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output.Result) {
@@ -22,4 +24,35 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 
 	wg.Wait()
 	close(resultChannel)
+}
+
+func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, writer io.Writer) int {
+	exitStatus := 0
+	for r := range resultChannel {
+		reader := formatter.Reader(r)
+		if !r.Success {
+			exitStatus = 1
+		}
+		output.WriteToWriter(writer, reader)
+	}
+	output.DoneWithWriter(writer)
+
+	return exitStatus
+}
+
+func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, writer io.Writer) int {
+	exitStatus := 0
+	results := make([]*output.Result, 0)
+	for r := range resultChannel {
+		results = append(results, r)
+		if !r.Success {
+			exitStatus = 1
+		}
+	}
+
+	reader := formatter.AggregateReader(results)
+	output.WriteToWriter(writer, reader)
+	output.DoneWithWriter(writer)
+
+	return exitStatus
 }

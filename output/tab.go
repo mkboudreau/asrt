@@ -14,12 +14,15 @@ const (
 
 	fmtTabRaw    string = "%v\t%v\t%v\n"
 	fmtTabPretty        = "%v%v%v\t%v%v%v\t%v%v%v\n"
+	fmtTabMd            = "*%v*\t%v\t%v\n"
 
 	fmtTabQuietRaw    = "%v\n"
 	fmtTabQuietPretty = "%v%v%v\n"
+	fmtTabQuietMd     = "*%v*\n"
 
 	fmtTabAggregateRaw    = "%v\t%v\n"
 	fmtTabAggregatePretty = "%v%v%v\t%v%v%v\n"
+	fmtTabAggregateMd     = "*%v*\t%v\n"
 )
 
 type TabResultFormatter struct {
@@ -34,6 +37,10 @@ func (rf *TabResultFormatter) AggregateReader(result []*Result) io.Reader {
 	var s string
 
 	switch {
+	case rf.Modifiers.Markdown && !rf.Modifiers.Quiet:
+		s = tabAggregateResultMarkdownString(result)
+	case rf.Modifiers.Markdown && rf.Modifiers.Quiet:
+		s = tabAggregateQuietResultMarkdownString(result)
 	case !rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
 		s = tabAggregateResultString(result)
 	case rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
@@ -51,6 +58,10 @@ func (rf *TabResultFormatter) Reader(result *Result) io.Reader {
 	var s string
 
 	switch {
+	case rf.Modifiers.Markdown && !rf.Modifiers.Quiet:
+		s = tabResultMarkdownString(result)
+	case rf.Modifiers.Markdown && rf.Modifiers.Quiet:
+		s = tabQuietResultMarkdownString(result)
 	case !rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
 		s = tabResultString(result)
 	case rf.Modifiers.Pretty && !rf.Modifiers.Quiet:
@@ -95,6 +106,18 @@ func tabResultPrettyString(result *Result) string {
 	return fmt.Sprintf(fmtTabPretty, bStatus, statusText, aStatus, bExpected, result.Expected, aExpected, bUrl, result.Url, aUrl)
 }
 
+func tabResultMarkdownString(result *Result) string {
+	statusText := statusTextOk
+	if !result.Success {
+		statusText = statusTextNotOk
+	}
+	if result.Error != nil {
+		statusText = statusTextError
+	}
+
+	return fmt.Sprintf(fmtTabMd, statusText, result.Expected, result.Url)
+}
+
 func tabQuietResultString(result *Result) string {
 	status := result.Success
 	if result.Error != nil {
@@ -102,6 +125,14 @@ func tabQuietResultString(result *Result) string {
 	}
 
 	return fmt.Sprintf(fmtTabQuietRaw, status)
+}
+func tabQuietResultMarkdownString(result *Result) string {
+	status := result.Success
+	if result.Error != nil {
+		status = false
+	}
+
+	return fmt.Sprintf(fmtTabQuietMd, status)
 }
 
 func tabQuietResultPrettyString(result *Result) string {
@@ -124,7 +155,7 @@ func tabQuietResultPrettyString(result *Result) string {
 
 func tabAggregateResultString(results []*Result) string {
 	aggResult := newAggregateResult(results)
-	return fmt.Sprintf(fmtTabAggregateRaw, aggResult.Success, aggResult.Success)
+	return fmt.Sprintf(fmtTabAggregateRaw, aggResult.Success, aggResult.Count)
 }
 
 func tabAggregateResultPrettyString(results []*Result) string {
@@ -145,9 +176,23 @@ func tabAggregateResultPrettyString(results []*Result) string {
 
 	return fmt.Sprintf(fmtTabAggregatePretty, bStatus, statusText, aStatus, bCount, aggResult.Count, aCount)
 }
+func tabAggregateResultMarkdownString(results []*Result) string {
+	aggResult := newAggregateResult(results)
+
+	statusText := statusTextOk
+	if !aggResult.Success {
+		statusText = statusTextNotOk
+	}
+
+	return fmt.Sprintf(fmtTabAggregateMd, statusText, aggResult.Count)
+}
 func tabAggregateQuietResultString(results []*Result) string {
 	aggResult := newAggregateQuietResult(results)
 	return fmt.Sprintf(fmtTabQuietRaw, aggResult.Success)
+}
+func tabAggregateQuietResultMarkdownString(results []*Result) string {
+	aggResult := newAggregateQuietResult(results)
+	return fmt.Sprintf(fmtTabQuietMd, aggResult.Success)
 }
 
 func tabAggregateQuietResultPrettyString(results []*Result) string {

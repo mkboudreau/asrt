@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"github.com/codegangsta/cli"
 	"os"
 	"path"
+
+	"github.com/codegangsta/cli"
 
 	"github.com/mkboudreau/asrt/commands"
 	_ "github.com/mkboudreau/asrt/log"
@@ -18,7 +18,7 @@ func main() {
 	app.Author = "Michael Boudreau"
 	app.Email = "https://github.com/mkboudreau/asrt"
 	app.Commands = commands.Commands
-	app.CommandNotFound = cmdNotFound
+	app.CommandNotFound = commands.CommandNotFound
 	app.Usage = "API Status Reporting Tool"
 	app.Version = version.Version + " (" + version.GitCommit + ")"
 
@@ -31,14 +31,4 @@ func main() {
 	}
 
 	app.Run(os.Args)
-}
-
-func cmdNotFound(c *cli.Context, command string) {
-	fmt.Printf(
-		"%s: '%s' is not an %s command. See '%s --help'.\n",
-		c.App.Name,
-		command,
-		c.App.Name,
-		c.App.Name,
-	)
 }

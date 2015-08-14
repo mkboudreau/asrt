@@ -1,18 +1,21 @@
 package commands
 
 import (
-	"github.com/codegangsta/cli"
-	"github.com/mkboudreau/asrt/output"
+	"fmt"
 	"io"
 	"log"
 	"time"
+
+	"github.com/codegangsta/cli"
+	"github.com/mkboudreau/asrt/output"
 )
 
 func cmdDashboard(c *cli.Context) {
 	config, err := getConfiguration(c)
 	if err != nil {
 		cli.ShowCommandHelp(c, "dashboard")
-		log.Fatal(err)
+		fmt.Println("Could not get configuration. Reason:", err)
+		log.Fatalln("Exiting....")
 	}
 
 	printDashboard(config)
@@ -60,10 +63,12 @@ func printDashboard(config *configuration) {
 	}
 	close(targetChannel)
 
-	formatter := getResultFormatter(config)
+	formatter := config.ResultFormatter()
+	writer := config.Writer()
+
 	if config.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter)
+		processAggregatedResult(resultChannel, formatter, writer)
 	} else {
-		processEachResult(resultChannel, formatter)
+		processEachResult(resultChannel, formatter, writer)
 	}
 }
