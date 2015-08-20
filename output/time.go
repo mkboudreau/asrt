@@ -17,6 +17,10 @@ func NewTimeReader(t time.Time) io.Reader {
 	return strings.NewReader(timeString)
 }
 
+func NewTimeString(t time.Time) string {
+	return fmt.Sprintf(fmtTimeRaw, t.Format(time.RFC1123Z))
+}
+
 func NewPrettyTimeReader(t time.Time) io.Reader {
 	timeString := fmt.Sprintf(fmtTimePretty, colorYellow, t.Format(time.RFC1123), colorReset)
 	return strings.NewReader(timeString)
