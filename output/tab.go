@@ -12,17 +12,17 @@ const (
 	// 2. test
 	// 3. after color
 
-	fmtTabRaw    string = "%v\t%v\t%v\n"
-	fmtTabPretty        = "%v%v%v\t%v%v%v\t%v%v%v\n"
-	fmtTabMd            = "*%v*\t%v\t%v\n"
+	fmtTabRaw    string = "%v\t%v\t%v"
+	fmtTabPretty        = "%v%v%v\t%v%v%v\t%v%v%v"
+	fmtTabMd            = "*%v*\t%v\t%v"
 
-	fmtTabQuietRaw    = "%v\n"
-	fmtTabQuietPretty = "%v%v%v\n"
-	fmtTabQuietMd     = "*%v*\n"
+	fmtTabQuietRaw    = "%v"
+	fmtTabQuietPretty = "%v%v%v"
+	fmtTabQuietMd     = "*%v*"
 
-	fmtTabAggregateRaw    = "%v\t%v\n"
-	fmtTabAggregatePretty = "%v%v%v\t%v%v%v\n"
-	fmtTabAggregateMd     = "*%v*\t%v\n"
+	fmtTabAggregateRaw    = "%v\t%v"
+	fmtTabAggregatePretty = "%v%v%v\t%v%v%v"
+	fmtTabAggregateMd     = "*%v*\t%v"
 )
 
 type TabResultFormatter struct {
@@ -59,6 +59,10 @@ func (rf *TabResultFormatter) Header() io.Reader {
 }
 
 func (rf *TabResultFormatter) Footer() io.Reader {
+	return strings.NewReader("\n")
+}
+
+func (rf *TabResultFormatter) RecordSeparator() io.Reader {
 	return strings.NewReader("\n")
 }
 

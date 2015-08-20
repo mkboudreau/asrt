@@ -27,6 +27,10 @@ func (rf *JsonResultFormatter) Header() io.Reader {
 	return strings.NewReader("")
 }
 
+func (rf *JsonResultFormatter) RecordSeparator() io.Reader {
+	return strings.NewReader(",")
+}
+
 func (rf *JsonResultFormatter) Footer() io.Reader {
 	if !rf.Modifiers.Aggregate {
 		if rf.Modifiers.Pretty {

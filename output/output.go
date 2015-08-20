@@ -17,10 +17,11 @@ const (
 )
 
 type Result struct {
-	Success  bool   `json:"ok"`
-	Error    error  `json:"error,omitempty"`
-	Expected string `json:"expectation,omitempty"`
-	Url      string `json:"url,omitempty"`
+	Success   bool   `json:"ok"`
+	Error     error  `json:"error,omitempty"`
+	Expected  string `json:"expectation,omitempty"`
+	Url       string `json:"url,omitempty"`
+	Timestamp string `json:"timestamp,omitempty"`
 }
 
 func NewResult(success bool, err error, expected string, url string) *Result {
@@ -37,6 +38,7 @@ type ResultFormatter interface {
 	AggregateReader(result []*Result) io.Reader
 	Header() io.Reader
 	Footer() io.Reader
+	RecordSeparator() io.Reader
 }
 
 type ResultFormatModifiers struct {

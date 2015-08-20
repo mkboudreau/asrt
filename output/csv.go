@@ -12,17 +12,17 @@ const (
 	// 2. test
 	// 3. after color
 
-	fmtCsvRaw    string = "%v,%v,%v\n"
-	fmtCsvPretty        = "%v%v%v,%v%v%v,%v%v%v\n"
-	fmtCsvMd            = "*%v*,%v,%v\n"
+	fmtCsvRaw    string = "%v,%v,%v"
+	fmtCsvPretty        = "%v%v%v,%v%v%v,%v%v%v"
+	fmtCsvMd            = "*%v*,%v,%v"
 
-	fmtCsvQuietRaw    = "%v\n"
-	fmtCsvQuietPretty = "%v%v%v\n"
-	fmtCsvQuietMd     = "*%v*\n"
+	fmtCsvQuietRaw    = "%v"
+	fmtCsvQuietPretty = "%v%v%v"
+	fmtCsvQuietMd     = "*%v*"
 
-	fmtCsvAggregateRaw    = "%v,%v\n"
-	fmtCsvAggregatePretty = "%v%v%v,%v%v%v\n"
-	fmtCsvAggregateMd     = "*%v*,%v\n"
+	fmtCsvAggregateRaw    = "%v,%v"
+	fmtCsvAggregatePretty = "%v%v%v,%v%v%v"
+	fmtCsvAggregateMd     = "*%v*,%v"
 )
 
 type CsvResultFormatter struct {
@@ -59,6 +59,9 @@ func (rf *CsvResultFormatter) Header() io.Reader {
 }
 
 func (rf *CsvResultFormatter) Footer() io.Reader {
+	return strings.NewReader("\n")
+}
+func (rf *CsvResultFormatter) RecordSeparator() io.Reader {
 	return strings.NewReader("\n")
 }
 
