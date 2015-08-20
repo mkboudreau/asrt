@@ -54,6 +54,7 @@ func (asrt *AsrtHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if asrt.cachedContent == nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	} else {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", contentType)
 		w.Write(asrt.cachedContent)
 	}
