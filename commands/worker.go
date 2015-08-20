@@ -4,6 +4,7 @@ import (
 	"io"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/mkboudreau/asrt/execution"
 	"github.com/mkboudreau/asrt/output"
@@ -18,6 +19,7 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 		go func(target *target) {
 			ok, err := execution.ExecuteWithTimoutAndHeaders(string(target.Method), target.URL, target.Timeout, target.Headers, target.ExpectedStatus)
 			result := output.NewResult(ok, err, strconv.Itoa(target.ExpectedStatus), target.URL)
+			result.Timestamp = output.NewTimeString(time.Now())
 			resultChannel <- result
 			wg.Done()
 		}(t)
@@ -29,13 +31,18 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 
 func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer) int {
 	exitStatus := 0
+	counter := 0
 	writer.WriteToWriter(w, formatter.Header())
 	for r := range resultChannel {
+		if counter != 0 {
+			writer.WriteToWriter(w, formatter.RecordSeparator())
+		}
 		reader := formatter.Reader(r)
 		if !r.Success {
 			exitStatus = 1
 		}
 		writer.WriteToWriter(w, reader)
+		counter++
 	}
 	writer.WriteToWriter(w, formatter.Footer())
 	writer.DoneWithWriter(w)
