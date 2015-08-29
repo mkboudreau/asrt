@@ -3,6 +3,7 @@ package writer
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,8 @@ const (
 	DefaultSlackChannel string       = "#general"
 	DefaultSlackUser    string       = "asrt"
 )
+
+var ErrNoContent = errors.New("No content to send")
 
 // SlackWriter implements io.WriteCloser.
 // Note: calls to Write only write to an internal buffer.
@@ -66,7 +69,9 @@ func (slack *SlackWriter) Write(p []byte) (n int, err error) {
 // Close method does the actual http.Post(...) to Slack
 func (slack *SlackWriter) Close() error {
 	if buf, err := slack.buildRequestBody(); err != nil {
-		return fmt.Errorf("could not close slackwriter: %v", err)
+		if err != ErrNoContent {
+			return fmt.Errorf("could not close slackwriter: %v", err)
+		}
 	} else {
 		if _, respErr := http.Post(slack.Url, "application/json", buf); respErr != nil {
 			return respErr
@@ -78,6 +83,9 @@ func (slack *SlackWriter) Close() error {
 }
 
 func (slack *SlackWriter) buildRequestBody() (io.Reader, error) {
+	if slack.buffer == nil || slack.buffer.Len() == 0 {
+		return nil, ErrNoContent
+	}
 	slack.Payload.Text = slack.buffer.String()
 	jsonBytes, jsonErr := json.Marshal(&slack.Payload)
 	if jsonErr != nil {
