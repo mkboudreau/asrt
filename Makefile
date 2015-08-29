@@ -27,5 +27,8 @@ check: report-dir
 	go vet ./...  2> reports/vet.txt
 report-dir:
 	mkdir -p reports
+js:
+	cd www && npm install ./
+	cd www && ./node_modules/gulp/bin/gulp.js deploy
 ci: deps tools test-report cover bench-report check
 
