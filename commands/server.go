@@ -30,7 +30,11 @@ func cmdServer(c *cli.Context) {
 	asrt.refreshServerCache()
 	go asrt.loopServerCacheRefresh()
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", c.String("port")), asrt))
+	http.Handle("/data", asrt)
+	http.HandleFunc("/", serveStaticWebFiles)
+
+	fmt.Println("Listening on port:", c.String("port"))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", c.String("port")), nil))
 }
 
 type AsrtHandler struct {
@@ -42,6 +46,11 @@ type AsrtHandler struct {
 
 func NewAsrtHandler(c *configuration) *AsrtHandler {
 	return &AsrtHandler{config: c, mutex: &sync.RWMutex{}}
+}
+
+func serveStaticWebFiles(w http.ResponseWriter, r *http.Request) {
+	fs := http.FileServer(http.Dir("www/dist"))
+	fs.ServeHTTP(w, r)
 }
 
 func (asrt *AsrtHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -96,9 +105,9 @@ func (asrt *AsrtHandler) refreshServerCache() {
 	writer := asrt.config.WriterWithWriters(asrt)
 
 	if asrt.config.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter, writer)
+		processAggregatedResult(resultChannel, formatter, writer, asrt.config.FailuresOnly)
 	} else {
-		processEachResult(resultChannel, formatter, writer)
+		processEachResult(resultChannel, formatter, writer, asrt.config.FailuresOnly)
 	}
 }
 

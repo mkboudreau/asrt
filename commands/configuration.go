@@ -59,6 +59,7 @@ type configuration struct {
 	AggregateOutput bool
 	Quiet           bool
 	Markdown        bool
+	FailuresOnly    bool
 	Workers         int
 	Targets         []*target
 }
@@ -82,6 +83,7 @@ func getConfiguration(c *cli.Context) (*configuration, error) {
 	config.Quiet = c.Bool("quiet")
 	config.Markdown = c.Bool("markdown")
 	config.Workers = c.Int("workers")
+	config.FailuresOnly = c.Bool("failures-only")
 	file := c.String("file")
 
 	config.Output = outputFormat(getUpperOrDefault(c.String("format"), formatTAB))

@@ -25,6 +25,10 @@ var statusFlags = []cli.Flag{
 		Usage: "Use file with list of URLs, HTTP Methods, and optional HTTP Headers",
 		Value: "",
 	},
+	cli.BoolFlag{
+		Name:  "failures-only",
+		Usage: "Only report on failures. This is useful for long running jobs, especially when coupled with notification to slack or something similar.",
+	},
 	cli.StringFlag{
 		Name:  "format, fmt",
 		Usage: fmt.Sprint("Output format. Valid values:", validFormats),

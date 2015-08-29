@@ -19,7 +19,7 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 		go func(target *target) {
 			ok, err := execution.ExecuteWithTimoutAndHeaders(string(target.Method), target.URL, target.Timeout, target.Headers, target.ExpectedStatus)
 			result := output.NewResult(ok, err, strconv.Itoa(target.ExpectedStatus), target.URL)
-			result.Timestamp = output.NewTimeString(time.Now())
+			result.Timestamp = output.NewTimeStringForJSON(time.Now())
 			resultChannel <- result
 			wg.Done()
 		}(t)
@@ -29,11 +29,16 @@ func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output
 	close(resultChannel)
 }
 
-func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer) int {
+func processEachResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer, onlyFailures bool) int {
 	exitStatus := 0
 	counter := 0
-	writer.WriteToWriter(w, formatter.Header())
 	for r := range resultChannel {
+		if r.Success && onlyFailures {
+			continue
+		}
+		if counter == 0 {
+			writer.WriteToWriter(w, formatter.Header())
+		}
 		if counter != 0 {
 			writer.WriteToWriter(w, formatter.RecordSeparator())
 		}
@@ -44,13 +49,15 @@ func processEachResult(resultChannel <-chan *output.Result, formatter output.Res
 		writer.WriteToWriter(w, reader)
 		counter++
 	}
-	writer.WriteToWriter(w, formatter.Footer())
+	if counter > 0 {
+		writer.WriteToWriter(w, formatter.Footer())
+	}
 	writer.DoneWithWriter(w)
 
 	return exitStatus
 }
 
-func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer) int {
+func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer, onlyFailures bool) int {
 	exitStatus := 0
 	results := make([]*output.Result, 0)
 	for r := range resultChannel {
@@ -60,10 +67,13 @@ func processAggregatedResult(resultChannel <-chan *output.Result, formatter outp
 		}
 	}
 
-	reader := formatter.AggregateReader(results)
-	writer.WriteToWriter(w, formatter.Header())
-	writer.WriteToWriter(w, reader)
-	writer.WriteToWriter(w, formatter.Footer())
+	if !onlyFailures || (exitStatus == 1 && onlyFailures) {
+		reader := formatter.AggregateReader(results)
+		writer.WriteToWriter(w, formatter.Header())
+		writer.WriteToWriter(w, reader)
+		writer.WriteToWriter(w, formatter.Footer())
+	}
+
 	writer.DoneWithWriter(w)
 
 	return exitStatus

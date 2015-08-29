@@ -32,9 +32,9 @@ func cmdStatus(c *cli.Context) {
 
 	var exitStatus int
 	if config.AggregateOutput {
-		exitStatus = processAggregatedResult(resultChannel, formatter, writer)
+		exitStatus = processAggregatedResult(resultChannel, formatter, writer, config.FailuresOnly)
 	} else {
-		exitStatus = processEachResult(resultChannel, formatter, writer)
+		exitStatus = processEachResult(resultChannel, formatter, writer, config.FailuresOnly)
 	}
 
 	os.Exit(exitStatus)

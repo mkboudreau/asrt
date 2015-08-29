@@ -68,8 +68,8 @@ func printDashboard(config *configuration) {
 	writer := config.Writer()
 
 	if config.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter, writer)
+		processAggregatedResult(resultChannel, formatter, writer, config.FailuresOnly)
 	} else {
-		processEachResult(resultChannel, formatter, writer)
+		processEachResult(resultChannel, formatter, writer, config.FailuresOnly)
 	}
 }
