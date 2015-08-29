@@ -49,7 +49,8 @@ type ResultFormatModifiers struct {
 }
 
 type quietResult struct {
-	Success bool `json:"ok"`
+	Success bool   `json:"ok"`
+	Url     string `json:"url,omitempty"`
 }
 
 type quietAggregateResult struct {
@@ -62,7 +63,7 @@ type aggregateResult struct {
 }
 
 func newQuietResult(result *Result) *quietResult {
-	return &quietResult{Success: result.Success}
+	return &quietResult{Success: result.Success, Url: result.Url}
 }
 
 func newAggregateQuietResult(results []*Result) *quietAggregateResult {
@@ -83,4 +84,42 @@ func newAggregateResult(results []*Result) *aggregateResult {
 		}
 	}
 	return &aggregateResult{Success: success, Count: len(results)}
+}
+
+type StatusMessager interface {
+	StatusMessage() string
+}
+
+func (result *Result) StatusMessage() string {
+	if result.Error != nil {
+		return statusTextError
+	} else if result.Success {
+		return statusTextOk
+	} else {
+		return statusTextNotOk
+	}
+}
+
+func (result *quietResult) StatusMessage() string {
+	if result.Success {
+		return statusTextOk
+	} else {
+		return statusTextNotOk
+	}
+}
+
+func (result *quietAggregateResult) StatusMessage() string {
+	if result.Success {
+		return statusTextOk
+	} else {
+		return statusTextNotOk
+	}
+}
+
+func (result *aggregateResult) StatusMessage() string {
+	if result.Success {
+		return statusTextOk
+	} else {
+		return statusTextNotOk
+	}
 }

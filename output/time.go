@@ -7,21 +7,20 @@ import (
 	"time"
 )
 
-var (
-	fmtTimeRaw    string = "%v\n"
-	fmtTimePretty        = "%v%v%v\n"
-)
-
 func NewTimeReader(t time.Time) io.Reader {
-	timeString := fmt.Sprintf(fmtTimeRaw, t.Format(time.RFC1123Z))
+	timeString := fmt.Sprintf("%v\n", t.Format(time.RFC1123Z))
 	return strings.NewReader(timeString)
 }
 
 func NewTimeString(t time.Time) string {
-	return fmt.Sprintf(fmtTimeRaw, t.Format(time.RFC1123Z))
+	return fmt.Sprintf("%v", t.Format(time.RFC1123Z))
+}
+
+func NewTimeStringForJSON(t time.Time) string {
+	return fmt.Sprintf("%v", t.Format(time.RFC3339))
 }
 
 func NewPrettyTimeReader(t time.Time) io.Reader {
-	timeString := fmt.Sprintf(fmtTimePretty, colorYellow, t.Format(time.RFC1123), colorReset)
+	timeString := fmt.Sprintf("%v%v%v\n", colorYellow, t.Format(time.RFC1123), colorReset)
 	return strings.NewReader(timeString)
 }
