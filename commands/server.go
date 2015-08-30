@@ -12,6 +12,11 @@ import (
 	"github.com/mkboudreau/asrt/output"
 )
 
+const (
+	NoFailureTextInJson string = "{'message':'No Failures'}"
+	NoFailureTextInText        = "No Failures"
+)
+
 func cmdServer(c *cli.Context) {
 	config, err := getConfiguration(c)
 	if err != nil {
@@ -121,7 +126,15 @@ func (asrt *AsrtHandler) Write(p []byte) (n int, err error) {
 
 func (asrt *AsrtHandler) Close() error {
 	asrt.mutex.Lock()
-	asrt.cachedContent = asrt.buffer.Bytes()
+	if asrt.buffer == nil || asrt.buffer.Len() == 0 {
+		if asrt.config.Output == formatJSON {
+			asrt.cachedContent = []byte(NoFailureTextInJson)
+		} else {
+			asrt.cachedContent = []byte(NoFailureTextInText)
+		}
+	} else {
+		asrt.cachedContent = asrt.buffer.Bytes()
+	}
 	asrt.buffer = nil
 	asrt.mutex.Unlock()
 	return nil
