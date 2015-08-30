@@ -69,11 +69,12 @@ GET www.google.com 200
 - `-f` or `--file`: input file (see formate below). at least a file or urls on the command line must be specified.
 - `-fmt` or `--format`: the format to be used for output. valid values are CSV,TAB,JSON. default is TAB.
 - `-a` or `--aggregate`: aggregates all sites into a single true/false response. includes the total sites unless -q is specified
-- `-q` or `--quiet`: makes response only show true/false.
+- `-q` or `--quiet`: minimizes the response and contains no header nor footer.
 - `-p` or `--pretty`: makes response have some formatting using escape codes. Mutually exclusive with markdown.
 - `-md` or `--markdown`: makes response have some formatting using markdown. Mutually exclusive with pretty.
 - `-w` or `--workers`: this is the number of workers or goroutines used to connect to the client sites.
 - `-m` or `--method`: the method to be used for all urls given on the command line. valid values are GET,POST,PUT,DELETE,HEAD,PATCH. default is GET. (not implemented yet)
+- `--failures-only`: only submits data to the writer upon failure. Useful when using something like slack since you may only want to perform an http.POST upon a failure.
 - `--port`: set port to listen on (only works with server command). default is 7070
 - `--slack-url`: setting this parameter enables slack integration using incoming webhook url specified.
 - `--slack-user`: overrides the user this tool will post as to slack. only works if slack-url is specified.
