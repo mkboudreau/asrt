@@ -9,7 +9,7 @@ import (
 var validFormats = []string{"CSV", "TAB", "JSON"}
 var validMethods = []string{"GET", "PUT", "POST", "DELETE", "HEAD", "PATCH"}
 
-var statusFlags = []cli.Flag{
+var StatusFlags = []cli.Flag{
 	cli.BoolFlag{
 		EnvVar: "DEBUG",
 		Name:   "debug, d",
@@ -78,14 +78,14 @@ var statusFlags = []cli.Flag{
 	},
 }
 
-var dashboardFlags = append(statusFlags,
+var DashboardFlags = append(StatusFlags,
 	cli.StringFlag{
 		Name:  "rate, r",
 		Usage: "Rate between refreshes of statuses. Only effective for dashboard settings. 0 = no refresh. Format is Golang time.Duration.",
 		Value: "30s",
 	})
 
-var serverFlags = append(dashboardFlags,
+var ServerFlags = append(DashboardFlags,
 	cli.StringFlag{
 		Name:  "port",
 		Usage: "Port to listen on",
@@ -98,21 +98,21 @@ var Commands = []cli.Command{
 		Usage:       "Print simple status lines for the API list",
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdStatus,
-		Flags:       statusFlags,
+		Flags:       StatusFlags,
 	},
 	{
 		Name:        "dashboard",
 		Usage:       "Print a dashboard that refreshes for the API list",
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdDashboard,
-		Flags:       dashboardFlags,
+		Flags:       DashboardFlags,
 	},
 	{
 		Name:        "server",
 		Usage:       "Listen on a port for requests",
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdServer,
-		Flags:       serverFlags,
+		Flags:       ServerFlags,
 	},
 }
 
