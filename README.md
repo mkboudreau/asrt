@@ -51,7 +51,7 @@ This tool is simple. Just dive in and start using it.
 
 Example File
 ```
-GET www.yahoo.com 
+GET www.yahoo.com
 GET www.google.com 200
 ```
 
@@ -70,6 +70,7 @@ GET www.google.com 200
 - `-fmt` or `--format`: the format to be used for output. valid values are CSV,TAB,JSON. default is TAB.
 - `-a` or `--aggregate`: aggregates all sites into a single true/false response. includes the total sites unless -q is specified
 - `-q` or `--quiet`: minimizes the response and contains no header nor footer.
+- `-qq` or `--quieter`: turns off standard output, superceding -q. useful for scripts.
 - `-p` or `--pretty`: makes response have some formatting using escape codes. Mutually exclusive with markdown.
 - `-md` or `--markdown`: makes response have some formatting using markdown. Mutually exclusive with pretty.
 - `-w` or `--workers`: this is the number of workers or goroutines used to connect to the client sites.
@@ -82,7 +83,7 @@ GET www.google.com 200
 - `--slack-icon`: overrides the icon this tool will use when posting to slack. only works if slack-url is specified.
 
 ### Input File Format
-- Each line must contain a method and a url. 
+- Each line must contain a method and a url.
 - Each line may optionally include an expected status code.
 - These values must be in order and separated with either a tab or a space.
 - Examples
@@ -97,7 +98,6 @@ GET www.google.com 200
 
 The following items are still outstanding:
 - Add support for headers, both as an option and from within a file
-- Implement `-m` option for customizing the method 
+- Implement `-m` option for customizing the method
 - Add more tests!
-- Add ability to pipe input 
-
+- Add ability to pipe input

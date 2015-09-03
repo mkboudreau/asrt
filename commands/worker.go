@@ -6,17 +6,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mkboudreau/asrt/config"
 	"github.com/mkboudreau/asrt/execution"
 	"github.com/mkboudreau/asrt/output"
 	"github.com/mkboudreau/asrt/writer"
 )
 
-func processTargets(incomingTargets <-chan *target, resultChannel chan<- *output.Result) {
+func processTargets(incomingTargets <-chan *config.Target, resultChannel chan<- *output.Result) {
 	var wg sync.WaitGroup
 
 	for t := range incomingTargets {
 		wg.Add(1)
-		go func(target *target) {
+		go func(target *config.Target) {
 			ok, err := execution.ExecuteWithTimoutAndHeaders(string(target.Method), target.URL, target.Timeout, target.Headers, target.ExpectedStatus)
 			result := output.NewResult(ok, err, strconv.Itoa(target.ExpectedStatus), target.URL)
 			result.Timestamp = output.NewTimeStringForJSON(time.Now())

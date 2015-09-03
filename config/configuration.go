@@ -1,4 +1,4 @@
-package commands
+package config
 
 import (
 	"bufio"
@@ -22,9 +22,12 @@ var (
 	ErrInvalidTargets       error = errors.New("Must specify url targets in file or as arguments to command.")
 	ErrInvalidTimeoutFormat       = errors.New("Timeout must conform to time.Duration format.")
 	ErrInvalidRateFormat          = errors.New("Rate must conform to time.Duration format.")
-	ErrInvalidMethod              = errors.New(fmt.Sprintf("Method unknown. Valid methods are %d", validMethods))
-	ErrInvalidFormat              = errors.New(fmt.Sprintf("Output format unknown. Valid formats are %d", validFormats))
+	ErrInvalidMethod              = errors.New(fmt.Sprintf("Method unknown. Valid methods are %d", ValidMethods))
+	ErrInvalidFormat              = errors.New(fmt.Sprintf("Output format unknown. Valid formats are %d", ValidFormats))
 )
+
+var ValidFormats = []string{"CSV", "TAB", "JSON"}
+var ValidMethods = []string{"GET", "PUT", "POST", "DELETE", "HEAD", "PATCH"}
 
 var DefaultHttpStatuses = map[string]int{
 	string(methodGet):    200,
@@ -45,12 +48,12 @@ const (
 )
 
 const (
-	formatCSV  outputFormat = "CSV"
-	formatTAB               = "TAB"
-	formatJSON              = "JSON"
+	FormatCSV  outputFormat = "CSV"
+	FormatTAB               = "TAB"
+	FormatJSON              = "JSON"
 )
 
-type configuration struct {
+type Configuration struct {
 	context         *cli.Context
 	CommandName     string
 	Rate            time.Duration
@@ -58,13 +61,14 @@ type configuration struct {
 	Pretty          bool
 	AggregateOutput bool
 	Quiet           bool
+	Quieter         bool
 	Markdown        bool
 	FailuresOnly    bool
 	Workers         int
-	Targets         []*target
+	Targets         []*Target
 }
 
-type target struct {
+type Target struct {
 	Method         commandMethod
 	Timeout        time.Duration
 	ExpectedStatus int
@@ -75,18 +79,19 @@ type target struct {
 type commandMethod string
 type outputFormat string
 
-func getConfiguration(c *cli.Context) (*configuration, error) {
-	config := &configuration{context: c, CommandName: c.Command.Name, Targets: make([]*target, 0)}
+func GetConfiguration(c *cli.Context) (*Configuration, error) {
+	config := &Configuration{context: c, CommandName: c.Command.Name, Targets: make([]*Target, 0)}
 
 	config.Pretty = c.Bool("pretty")
 	config.AggregateOutput = c.Bool("aggregate")
 	config.Quiet = c.Bool("quiet")
+	config.Quieter = c.Bool("quieter")
 	config.Markdown = c.Bool("markdown")
 	config.Workers = c.Int("workers")
 	config.FailuresOnly = c.Bool("failures-only")
 	file := c.String("file")
 
-	config.Output = outputFormat(getUpperOrDefault(c.String("format"), formatTAB))
+	config.Output = outputFormat(getUpperOrDefault(c.String("format"), FormatTAB))
 	if config.Output == "" {
 		return nil, ErrInvalidFormat
 	}
@@ -134,7 +139,7 @@ func getTimeDurationConfig(c *cli.Context, key string) time.Duration {
 	return d
 }
 
-func (config *configuration) ResultFormatter() output.ResultFormatter {
+func (config *Configuration) ResultFormatter() output.ResultFormatter {
 	modifiers := &output.ResultFormatModifiers{
 		Pretty:    config.Pretty,
 		Aggregate: config.AggregateOutput,
@@ -143,29 +148,29 @@ func (config *configuration) ResultFormatter() output.ResultFormatter {
 	}
 
 	switch {
-	case config.Output == formatJSON:
+	case config.Output == FormatJSON:
 		return output.NewJsonResultFormatter(modifiers)
-	case config.Output == formatCSV:
+	case config.Output == FormatCSV:
 		return output.NewCsvResultFormatter(modifiers)
-	case config.Output == formatTAB:
+	case config.Output == FormatTAB:
 		return output.NewTabResultFormatter(modifiers)
 	}
 
 	return nil
 }
 
-func (config *configuration) Writer() io.Writer {
+func (config *Configuration) Writer() io.Writer {
 	writers := config.getConfigurationWriters()
 	return newProxyWriteCloser(writers...)
 }
 
-func (config *configuration) WriterWithWriters(writers ...io.Writer) io.Writer {
+func (config *Configuration) WriterWithWriters(writers ...io.Writer) io.Writer {
 	configWriters := config.getConfigurationWriters()
 	configWriters = append(configWriters, writers...)
 	return newProxyWriteCloser(configWriters...)
 }
 
-func (config *configuration) getConfigurationWriters() []io.Writer {
+func (config *Configuration) getConfigurationWriters() []io.Writer {
 	writers := make([]io.Writer, 0)
 
 	main := config.getMainWriter()
@@ -211,7 +216,10 @@ func (pwc *proxyWriteCloser) Close() error {
 	return nil
 }
 
-func (config *configuration) getMainWriter() io.Writer {
+func (config *Configuration) getMainWriter() io.Writer {
+	if config.Quieter {
+		return nil
+	}
 	switch config.context.Command.Name {
 	case "status":
 		return os.Stdout
@@ -223,7 +231,7 @@ func (config *configuration) getMainWriter() io.Writer {
 	return nil
 }
 
-func (config *configuration) getSlackWriter() io.Writer {
+func (config *Configuration) getSlackWriter() io.Writer {
 	if config.context.String("slack-url") == "" {
 		return nil
 	}
@@ -244,9 +252,9 @@ func (config *configuration) getSlackWriter() io.Writer {
 	return w
 }
 
-func buildTargetsFromFile(c *cli.Context) ([]*target, error) {
+func buildTargetsFromFile(c *cli.Context) ([]*Target, error) {
 	filename := c.String("file")
-	targets := make([]*target, 0)
+	targets := make([]*Target, 0)
 
 	timeout := getTimeDurationConfig(c, "timeout")
 
@@ -278,7 +286,7 @@ func buildTargetsFromFile(c *cli.Context) ([]*target, error) {
 		}
 
 		urlString := parts[1]
-		var t *target
+		var t *Target
 		var tErr error
 
 		if len(parts) > 2 {
@@ -304,7 +312,7 @@ func buildTargetsFromFile(c *cli.Context) ([]*target, error) {
 	return targets, nil
 }
 
-func buildTargetsFromArgs(c *cli.Context) ([]*target, error) {
+func buildTargetsFromArgs(c *cli.Context) ([]*Target, error) {
 
 	timeout := getTimeDurationConfig(c, "timeout")
 	method := commandMethod(getUpperOrDefault(c.String("method"), methodGet))
@@ -312,7 +320,7 @@ func buildTargetsFromArgs(c *cli.Context) ([]*target, error) {
 		return nil, ErrInvalidMethod
 	}
 
-	targets := make([]*target, 0)
+	targets := make([]*Target, 0)
 	for _, u := range c.Args() {
 		expectedStatus := DefaultHttpStatuses[string(method)]
 		t, err := newTargetWithExpectation(u, expectedStatus)
@@ -326,7 +334,7 @@ func buildTargetsFromArgs(c *cli.Context) ([]*target, error) {
 	return targets, nil
 }
 
-func newTargetWithExpectation(urlString string, expectedStatus int) (*target, error) {
+func newTargetWithExpectation(urlString string, expectedStatus int) (*Target, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
 		return nil, err
@@ -336,7 +344,7 @@ func newTargetWithExpectation(urlString string, expectedStatus int) (*target, er
 		u.Scheme = "http"
 	}
 
-	t := &target{
+	t := &Target{
 		URL:            u.String(),
 		ExpectedStatus: expectedStatus,
 	}

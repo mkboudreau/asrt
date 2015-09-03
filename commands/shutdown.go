@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func osSignalShutdown(doBeforeShutdown func(), shutdownDelay int) {
+func OsSignalShutdown(doBeforeShutdown func(), shutdownDelay int) {
 	sigc := make(chan os.Signal, 2)
 
 	signal.Notify(sigc,

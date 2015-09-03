@@ -4,10 +4,8 @@ import (
 	"fmt"
 
 	"github.com/codegangsta/cli"
+	"github.com/mkboudreau/asrt/config"
 )
-
-var validFormats = []string{"CSV", "TAB", "JSON"}
-var validMethods = []string{"GET", "PUT", "POST", "DELETE", "HEAD", "PATCH"}
 
 var StatusFlags = []cli.Flag{
 	cli.BoolFlag{
@@ -31,7 +29,7 @@ var StatusFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "format, fmt",
-		Usage: fmt.Sprint("Output format. Valid values:", validFormats),
+		Usage: fmt.Sprint("Output format. Valid values:", config.ValidFormats),
 		Value: "tab",
 	},
 	cli.BoolFlag{
@@ -50,6 +48,10 @@ var StatusFlags = []cli.Flag{
 		Name:  "quiet, q",
 		Usage: "Quiet results into just the statuses. Usually useful in aggregate -qa",
 	},
+	cli.BoolFlag{
+		Name:  "quieter, qq",
+		Usage: "Turns off standard output",
+	},
 	cli.IntFlag{
 		Name:  "workers, w",
 		Usage: "Number of workers/goroutines to use to hit the sites",
@@ -57,7 +59,7 @@ var StatusFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "method, m",
-		Usage: fmt.Sprint("Use HTTP Method for all URLs on command line. Does not affect file inputs. Valid values:", validMethods),
+		Usage: fmt.Sprint("Use HTTP Method for all URLs on command line. Does not affect file inputs. Valid values:", config.ValidMethods),
 		Value: "GET",
 	},
 	cli.StringFlag{

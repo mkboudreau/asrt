@@ -6,35 +6,36 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/mkboudreau/asrt/config"
 	"github.com/mkboudreau/asrt/output"
 )
 
-func cmdStatus(c *cli.Context) {
-	config, err := getConfiguration(c)
+func cmdStatus(ctx *cli.Context) {
+	c, err := config.GetConfiguration(ctx)
 	if err != nil {
-		cli.ShowCommandHelp(c, "status")
+		cli.ShowCommandHelp(ctx, "status")
 		fmt.Println("Could not get configuration. Reason:", err)
 		log.Fatalln("Exiting....")
 	}
 
-	targetChannel := make(chan *target, config.Workers)
+	targetChannel := make(chan *config.Target, c.Workers)
 	resultChannel := make(chan *output.Result)
 
 	go processTargets(targetChannel, resultChannel)
 
-	for _, target := range config.Targets {
+	for _, target := range c.Targets {
 		targetChannel <- target
 	}
 	close(targetChannel)
 
-	formatter := config.ResultFormatter()
-	writer := config.Writer()
+	formatter := c.ResultFormatter()
+	writer := c.Writer()
 
 	var exitStatus int
-	if config.AggregateOutput {
-		exitStatus = processAggregatedResult(resultChannel, formatter, writer, config.FailuresOnly)
+	if c.AggregateOutput {
+		exitStatus = processAggregatedResult(resultChannel, formatter, writer, c.FailuresOnly)
 	} else {
-		exitStatus = processEachResult(resultChannel, formatter, writer, config.FailuresOnly)
+		exitStatus = processEachResult(resultChannel, formatter, writer, c.FailuresOnly)
 	}
 
 	os.Exit(exitStatus)

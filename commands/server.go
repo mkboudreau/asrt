@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
+	"github.com/mkboudreau/asrt/config"
 	"github.com/mkboudreau/asrt/output"
 )
 
@@ -17,40 +18,40 @@ const (
 	NoFailureTextInText        = "No Failures"
 )
 
-func cmdServer(c *cli.Context) {
-	config, err := getConfiguration(c)
+func cmdServer(ctx *cli.Context) {
+	c, err := config.GetConfiguration(ctx)
 	if err != nil {
-		cli.ShowCommandHelp(c, "server")
+		cli.ShowCommandHelp(ctx, "server")
 		fmt.Println("Could not get configuration. Reason:", err)
 		log.Fatalln("Exiting....")
 	}
 
-	if c.String("port") == "" {
-		cli.ShowCommandHelp(c, "server")
+	if ctx.String("port") == "" {
+		cli.ShowCommandHelp(ctx, "server")
 		fmt.Println("Missing port")
 		log.Fatalln("Exiting....")
 	}
 
-	asrt := NewAsrtHandler(config)
+	asrt := NewAsrtHandler(c)
 	asrt.refreshServerCache()
 	go asrt.loopServerCacheRefresh()
 
 	http.Handle("/data", asrt)
 	http.HandleFunc("/", serveStaticWebFiles)
 
-	fmt.Println("Listening on port:", c.String("port"))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", c.String("port")), nil))
+	fmt.Println("Listening on port:", ctx.String("port"))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", ctx.String("port")), nil))
 }
 
 type AsrtHandler struct {
-	config        *configuration
+	configuration *config.Configuration
 	cachedContent []byte
 	buffer        *bytes.Buffer
 	mutex         *sync.RWMutex
 }
 
-func NewAsrtHandler(c *configuration) *AsrtHandler {
-	return &AsrtHandler{config: c, mutex: &sync.RWMutex{}}
+func NewAsrtHandler(cfg *config.Configuration) *AsrtHandler {
+	return &AsrtHandler{configuration: cfg, mutex: &sync.RWMutex{}}
 }
 
 func serveStaticWebFiles(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +61,7 @@ func serveStaticWebFiles(w http.ResponseWriter, r *http.Request) {
 
 func (asrt *AsrtHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	contentType := "text/plain"
-	if asrt.config.Output == formatJSON {
+	if asrt.configuration.Output == config.FormatJSON {
 		contentType = "application/json"
 	}
 
@@ -81,9 +82,9 @@ func (asrt *AsrtHandler) loopServerCacheRefresh() {
 		close(done)
 	}
 
-	osSignalShutdown(fn, 5)
+	OsSignalShutdown(fn, 5)
 
-	ticker := time.NewTicker(asrt.config.Rate)
+	ticker := time.NewTicker(asrt.configuration.Rate)
 
 	for {
 		select {
@@ -96,23 +97,23 @@ func (asrt *AsrtHandler) loopServerCacheRefresh() {
 }
 
 func (asrt *AsrtHandler) refreshServerCache() {
-	targetChannel := make(chan *target, asrt.config.Workers)
+	targetChannel := make(chan *config.Target, asrt.configuration.Workers)
 	resultChannel := make(chan *output.Result)
 
 	go processTargets(targetChannel, resultChannel)
 
-	for _, target := range asrt.config.Targets {
+	for _, target := range asrt.configuration.Targets {
 		targetChannel <- target
 	}
 	close(targetChannel)
 
-	formatter := asrt.config.ResultFormatter()
-	writer := asrt.config.WriterWithWriters(asrt)
+	formatter := asrt.configuration.ResultFormatter()
+	writer := asrt.configuration.WriterWithWriters(asrt)
 
-	if asrt.config.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter, writer, asrt.config.FailuresOnly)
+	if asrt.configuration.AggregateOutput {
+		processAggregatedResult(resultChannel, formatter, writer, asrt.configuration.FailuresOnly)
 	} else {
-		processEachResult(resultChannel, formatter, writer, asrt.config.FailuresOnly)
+		processEachResult(resultChannel, formatter, writer, asrt.configuration.FailuresOnly)
 	}
 }
 
@@ -127,7 +128,7 @@ func (asrt *AsrtHandler) Write(p []byte) (n int, err error) {
 func (asrt *AsrtHandler) Close() error {
 	asrt.mutex.Lock()
 	if asrt.buffer == nil || asrt.buffer.Len() == 0 {
-		if asrt.config.Output == formatJSON {
+		if asrt.configuration.Output == config.FormatJSON {
 			asrt.cachedContent = []byte(NoFailureTextInJson)
 		} else {
 			asrt.cachedContent = []byte(NoFailureTextInText)
