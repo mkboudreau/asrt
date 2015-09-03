@@ -20,19 +20,19 @@ func (rf *CsvResultFormatter) Header() io.Reader {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader("*RESULT*,*COUNT*\n")
 			} else {
-				return strings.NewReader("*RESULT*,*EXPECT*,*URL*\n")
+				return strings.NewReader("*RESULT*,*EXPECT*,*ACTUAL*,*URL*\n")
 			}
 		} else if rf.Modifiers.Pretty {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader(fmt.Sprintf("%vRESULT%v,%vCOUNT%v\n", colorYellow, colorReset, colorYellow, colorReset))
 			} else {
-				return strings.NewReader(fmt.Sprintf("%vRESULT%v,%vEXPECT%v,%vURL%v\n", colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset))
+				return strings.NewReader(fmt.Sprintf("%vRESULT%v,%vEXPECT%v,%vACTUAL%v,%vURL%v\n", colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset))
 			}
 		} else {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader("RESULT,COUNT\n")
 			} else {
-				return strings.NewReader("RESULT,EXPECT,URL\n")
+				return strings.NewReader("RESULT,EXPECT,ACTUAL,URL\n")
 			}
 		}
 	}

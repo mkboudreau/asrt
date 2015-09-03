@@ -48,6 +48,9 @@ func getResultStringAggregateWithSeparator(results []*Result, modifiers *ResultF
 	return strings.NewReader(s)
 }
 
+// Normal Result
+// +pretty
+// +quiet
 func separatorResultForQuietPretty(result *Result, separator string) string {
 	statusColor := colorGreen
 	if !result.Success || result.Error != nil {
@@ -57,24 +60,49 @@ func separatorResultForQuietPretty(result *Result, separator string) string {
 	return fmt.Sprintf("%v%v%v%v%v", statusColor, result.StatusMessage(), colorReset, separator, result.Url)
 }
 
+// Normal Result
 func separatorResult(result *Result, separator string) string {
-	return fmt.Sprintf("%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.Url)
+	return fmt.Sprintf("%v%v%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Url)
 }
 
+// Normal Result
+// +pretty
 func separatorResultForPretty(result *Result, separator string) string {
 	statusColor := colorGreen
 	if !result.Success || result.Error != nil {
 		statusColor = colorRed
 	}
 
-	return fmt.Sprintf("%v%v%v%v%v%v%v", statusColor, result.StatusMessage(), colorReset, separator, result.Expected, separator, result.Url)
+	return fmt.Sprintf("%v%v%v%v%v%v%v%v%v", statusColor, result.StatusMessage(), colorReset, separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Url)
 }
 
+// Normal Result
+// +quiet
+func separatorResultForQuiet(result *Result, separator string) string {
+	return fmt.Sprintf("%v%v%v", result.StatusMessage(), separator, result.Url)
+}
+
+// Normal Result
+// +markdown
+func separatorResultForMarkdown(result *Result, separator string) string {
+	return fmt.Sprintf("*%v*%v%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Url)
+}
+
+// Normal Result
+// +markdown
+// +quiet
+func separatorResultForQuietMarkdown(result *Result, separator string) string {
+	return fmt.Sprintf("*%v*%v%v", result.StatusMessage(), separator, result.Url)
+}
+
+// Aggregate Result
 func separatorAggregateResult(results []*Result, separator string) string {
 	aggResult := newAggregateResult(results)
 	return fmt.Sprintf("%v%v%v", aggResult.StatusMessage(), separator, aggResult.Count)
 }
 
+// Aggregate Result
+// +pretty
 func separatorAggregateResultForPretty(results []*Result, separator string) string {
 	aggResult := newAggregateResult(results)
 
@@ -86,15 +114,16 @@ func separatorAggregateResultForPretty(results []*Result, separator string) stri
 	return fmt.Sprintf("%v%v%v%v%v", statusColor, aggResult.StatusMessage(), colorReset, separator, aggResult.Count)
 }
 
-func separatorResultForQuiet(result *Result, separator string) string {
-	return fmt.Sprintf("%v%v%v", result.StatusMessage(), separator, result.Url)
-}
-
+// Aggregate Result
+// +quiet
 func separatorAggregateResultForQuiet(results []*Result, separator string) string {
 	aggResult := newAggregateQuietResult(results)
 	return fmt.Sprintf("%v", aggResult.StatusMessage())
 }
 
+// Aggregate Result
+// +pretty
+// +quiet
 func separatorAggregateResultForQuietPretty(results []*Result, separator string) string {
 	aggResult := newAggregateQuietResult(results)
 
@@ -106,20 +135,17 @@ func separatorAggregateResultForQuietPretty(results []*Result, separator string)
 	return fmt.Sprintf("%v%v%v", statusColor, aggResult.StatusMessage(), colorReset)
 }
 
-func separatorResultForMarkdown(result *Result, separator string) string {
-	return fmt.Sprintf("*%v*%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.Url)
-}
-
-func separatorResultForQuietMarkdown(result *Result, separator string) string {
-	return fmt.Sprintf("*%v*%v%v", result.StatusMessage(), separator, result.Url)
-}
-
+// Aggregate Result
+// +markdown
 func separatorAggregateResultForMarkdown(results []*Result, separator string) string {
 	aggResult := newAggregateResult(results)
 
 	return fmt.Sprintf("*%v*%v%v", aggResult.StatusMessage(), separator, aggResult.Count)
 }
 
+// Aggregate Result
+// +markdown
+// +quiet
 func separatorAggregateResultForQuietMarkdown(results []*Result, separator string) string {
 	aggResult := newAggregateQuietResult(results)
 	return fmt.Sprintf("*%v*", aggResult.StatusMessage())

@@ -20,19 +20,19 @@ func (rf *TabResultFormatter) Header() io.Reader {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader("*RESULT*\t*COUNT*\n")
 			} else {
-				return strings.NewReader("*RESULT*\t*EXPECT*\t*URL*\n")
+				return strings.NewReader("*RESULT*\t*EXPECT*\t*ACTUAL*\t*URL*\n")
 			}
 		} else if rf.Modifiers.Pretty {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader(fmt.Sprintf("%vRESULT%v\t%vCOUNT%v\n", colorYellow, colorReset, colorYellow, colorReset))
 			} else {
-				return strings.NewReader(fmt.Sprintf("%vRESULT%v\t%vEXPECT%v\t%vURL%v\n", colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset))
+				return strings.NewReader(fmt.Sprintf("%vRESULT%v\t%vEXPECT%v\t%vACTUAL%v\t%vURL%v\n", colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset, colorYellow, colorReset))
 			}
 		} else {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader("RESULT\tCOUNT\n")
 			} else {
-				return strings.NewReader("RESULT\tEXPECT\tURL\n")
+				return strings.NewReader("RESULT\tEXPECT\tACTUAL\tURL\n")
 			}
 		}
 	}

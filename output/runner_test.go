@@ -2,9 +2,10 @@ package output
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testFormat int

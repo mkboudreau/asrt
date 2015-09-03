@@ -2,7 +2,6 @@ package execution
 
 import (
 	"crypto/tls"
-	"log"
 	"net/http"
 	"time"
 )
@@ -14,29 +13,40 @@ var DefaultHeaders = map[string]string{
 }
 var DefaultTimeout = 0 * time.Second
 
-func Execute(method string, url string, expectation int) (bool, error) {
+type ExecutionResult struct {
+	URL      string
+	Method   string
+	Expected int
+	Actual   int
+	Error    error
+}
+
+func (r *ExecutionResult) Success() bool {
+	return r.Error == nil && r.Expected == r.Actual
+}
+
+func Execute(method string, url string, expectation int) *ExecutionResult {
 	return ExecuteWithTimoutAndHeaders(method, url, DefaultTimeout, DefaultHeaders, expectation)
 }
 
-func ExecuteWithHeaders(method string, url string, headers map[string]string, expectation int) (bool, error) {
+func ExecuteWithHeaders(method string, url string, headers map[string]string, expectation int) *ExecutionResult {
 	return ExecuteWithTimoutAndHeaders(method, url, DefaultTimeout, headers, expectation)
 }
 
-func ExecuteWithTimeout(method string, url string, timeout time.Duration, expectation int) (bool, error) {
+func ExecuteWithTimeout(method string, url string, timeout time.Duration, expectation int) *ExecutionResult {
 	return ExecuteWithTimoutAndHeaders(method, url, timeout, DefaultHeaders, expectation)
 }
 
-func ExecuteWithTimoutAndHeaders(method string, url string, timeout time.Duration, headers map[string]string, expectation int) (bool, error) {
+func ExecuteWithTimoutAndHeaders(method string, url string, timeout time.Duration, headers map[string]string, expectation int) *ExecutionResult {
 	statusCode, err := execute(method, url, timeout, headers)
-	if err != nil {
-		return false, err
-	}
 
-	if statusCode != expectation {
-		log.Println("Status code for %v expected to be %d, but actual is %d", url, expectation, statusCode)
+	return &ExecutionResult{
+		URL:      url,
+		Method:   method,
+		Expected: expectation,
+		Actual:   statusCode,
+		Error:    err,
 	}
-
-	return (statusCode == expectation), nil
 }
 
 func execute(method string, url string, timeout time.Duration, headers map[string]string) (int, error) {

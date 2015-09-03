@@ -18,8 +18,9 @@ func processTargets(incomingTargets <-chan *config.Target, resultChannel chan<- 
 	for t := range incomingTargets {
 		wg.Add(1)
 		go func(target *config.Target) {
-			ok, err := execution.ExecuteWithTimoutAndHeaders(string(target.Method), target.URL, target.Timeout, target.Headers, target.ExpectedStatus)
-			result := output.NewResult(ok, err, strconv.Itoa(target.ExpectedStatus), target.URL)
+			execResult := execution.ExecuteWithTimoutAndHeaders(string(target.Method), target.URL, target.Timeout, target.Headers, target.ExpectedStatus)
+
+			result := output.NewResult(execResult.Success(), execResult.Error, strconv.Itoa(execResult.Expected), strconv.Itoa(execResult.Actual), execResult.URL)
 			result.Timestamp = output.NewTimeStringForJSON(time.Now())
 			resultChannel <- result
 			wg.Done()

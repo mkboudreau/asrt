@@ -1,8 +1,6 @@
 package output
 
-import (
-	"io"
-)
+import "io"
 
 const (
 	colorGreen  string = "\033[1;32m"
@@ -20,15 +18,17 @@ type Result struct {
 	Success   bool   `json:"ok"`
 	Error     error  `json:"error,omitempty"`
 	Expected  string `json:"expectation,omitempty"`
+	Actual    string `json:"actual,omitempty"`
 	Url       string `json:"url,omitempty"`
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
-func NewResult(success bool, err error, expected string, url string) *Result {
+func NewResult(success bool, err error, expected string, actual string, url string) *Result {
 	return &Result{
 		Success:  success,
 		Error:    err,
 		Expected: expected,
+		Actual:   actual,
 		Url:      url,
 	}
 }
@@ -90,14 +90,21 @@ type StatusMessager interface {
 	StatusMessage() string
 }
 
+func (result *Result) StatusCodeActual() string {
+	if result.Actual == "" {
+		return "n/a"
+	}
+	return result.Actual
+}
+
 func (result *Result) StatusMessage() string {
+	if result.Success {
+		return statusTextOk
+	}
 	if result.Error != nil {
 		return statusTextError
-	} else if result.Success {
-		return statusTextOk
-	} else {
-		return statusTextNotOk
 	}
+	return statusTextNotOk
 }
 
 func (result *quietResult) StatusMessage() string {
