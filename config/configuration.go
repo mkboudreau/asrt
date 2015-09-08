@@ -1,54 +1,49 @@
 package config
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/url"
 	"os"
 	"reflect"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/output"
-	"github.com/mkboudreau/asrt/writer"
 )
 
 var (
-	ErrInvalidTargets       error = errors.New("Must specify url targets in file or as arguments to command.")
+	ErrInvalidTargets       error = errors.New("Must specify at least one target configurer that will return valid targets, such as a file or cli arguments.")
 	ErrInvalidTimeoutFormat       = errors.New("Timeout must conform to time.Duration format.")
 	ErrInvalidRateFormat          = errors.New("Rate must conform to time.Duration format.")
-	ErrInvalidMethod              = errors.New(fmt.Sprintf("Method unknown. Valid methods are %d", ValidMethods))
-	ErrInvalidFormat              = errors.New(fmt.Sprintf("Output format unknown. Valid formats are %d", ValidFormats))
+	ErrInvalidMethod              = errors.New(fmt.Sprintf("Method unknown. Valid methods are %v", ValidMethods))
+	ErrInvalidFormat              = errors.New(fmt.Sprintf("Output format unknown. Valid formats are %v", ValidFormats))
 )
 
 var ValidFormats = []string{"CSV", "TAB", "JSON"}
 var ValidMethods = []string{"GET", "PUT", "POST", "DELETE", "HEAD", "PATCH"}
 
 var DefaultHttpStatuses = map[string]int{
-	string(methodGet):    200,
-	string(methodPost):   201,
-	string(methodPut):    200,
-	string(methodDelete): 200,
-	string(methodHead):   200,
-	string(methodPatch):  200,
+	string(MethodGet):    200,
+	string(MethodPost):   201,
+	string(MethodPut):    200,
+	string(MethodDelete): 200,
+	string(MethodHead):   200,
+	string(MethodPatch):  200,
 }
 
 const (
-	methodGet    commandMethod = "GET"
-	methodPost                 = "POST"
-	methodPut                  = "PUT"
-	methodDelete               = "DELETE"
-	methodHead                 = "HEAD"
-	methodPatch                = "PATCH"
+	MethodGet    CommandMethod = "GET"
+	MethodPost                 = "POST"
+	MethodPut                  = "PUT"
+	MethodDelete               = "DELETE"
+	MethodHead                 = "HEAD"
+	MethodPatch                = "PATCH"
 )
 
 const (
-	FormatCSV  outputFormat = "CSV"
+	FormatCSV  OutputFormat = "CSV"
 	FormatTAB               = "TAB"
 	FormatJSON              = "JSON"
 )
@@ -57,7 +52,7 @@ type Configuration struct {
 	context         *cli.Context
 	CommandName     string
 	Rate            time.Duration
-	Output          outputFormat
+	Output          OutputFormat
 	Pretty          bool
 	AggregateOutput bool
 	Quiet           bool
@@ -69,15 +64,16 @@ type Configuration struct {
 }
 
 type Target struct {
-	Method         commandMethod
+	Label          string
+	Method         CommandMethod
 	Timeout        time.Duration
 	ExpectedStatus int
 	URL            string
 	Headers        map[string]string
 }
 
-type commandMethod string
-type outputFormat string
+type CommandMethod string
+type OutputFormat string
 
 func GetConfiguration(c *cli.Context) (*Configuration, error) {
 	config := &Configuration{context: c, CommandName: c.Command.Name, Targets: make([]*Target, 0)}
@@ -89,54 +85,39 @@ func GetConfiguration(c *cli.Context) (*Configuration, error) {
 	config.Markdown = c.Bool("markdown")
 	config.Workers = c.Int("workers")
 	config.FailuresOnly = c.Bool("failures-only")
-	file := c.String("file")
 
-	config.Output = outputFormat(getUpperOrDefault(c.String("format"), FormatTAB))
-	if config.Output == "" {
+	config.Output = OutputFormat(GetUpperOrDefault(c.String("format"), FormatTAB))
+	if !validateOutput(string(config.Output)) {
 		return nil, ErrInvalidFormat
 	}
 
-	config.Rate = getTimeDurationConfig(c, "rate")
+	config.Rate = GetTimeDurationConfig(c, "rate")
 
-	if file == "" && len(c.Args()) == 0 {
+	newTargets, err := getRegisteredConfigureredTargets(c)
+	if err != nil {
+		return nil, err
+	} else if len(newTargets) == 0 {
 		return nil, ErrInvalidTargets
 	}
 
-	if newTargets, err := buildTargetsFromArgs(c); err != nil {
-		return nil, err
-	} else {
-		config.Targets = append(config.Targets, newTargets...)
-	}
-	if file != "" {
-		if newTargets, err := buildTargetsFromFile(c); err != nil {
-			return nil, err
-		} else {
-			config.Targets = append(config.Targets, newTargets...)
-		}
-	}
+	config.Targets = newTargets
 
 	return config, nil
 }
 
-func getUpperOrDefault(val string, def interface{}) string {
-	v := strings.ToUpper(val)
-	if v == "" {
-		if tmp, ok := def.(string); !ok {
-			return ""
-		} else {
-			v = tmp
-		}
+func validateOutput(output string) bool {
+	switch {
+	case output == string(FormatJSON):
+		return true
+	case output == string(FormatCSV):
+		return true
+	case output == string(FormatTAB):
+		return true
+	case output == "":
+		return true
+	default:
+		return false
 	}
-	return v
-}
-func getTimeDurationConfig(c *cli.Context, key string) time.Duration {
-	v := c.String(key)
-	d, err := time.ParseDuration(v)
-	if err != nil {
-		d = 0 * time.Second
-		log.Printf("Could not parse duration %v, defaulting to %v", v, d)
-	}
-	return d
 }
 
 func (config *Configuration) ResultFormatter() output.ResultFormatter {
@@ -160,29 +141,14 @@ func (config *Configuration) ResultFormatter() output.ResultFormatter {
 }
 
 func (config *Configuration) Writer() io.Writer {
-	writers := config.getConfigurationWriters()
+	writers := getRegisteredWriters(config.context)
 	return newProxyWriteCloser(writers...)
 }
 
 func (config *Configuration) WriterWithWriters(writers ...io.Writer) io.Writer {
-	configWriters := config.getConfigurationWriters()
+	configWriters := getRegisteredWriters(config.context)
 	configWriters = append(configWriters, writers...)
 	return newProxyWriteCloser(configWriters...)
-}
-
-func (config *Configuration) getConfigurationWriters() []io.Writer {
-	writers := make([]io.Writer, 0)
-
-	main := config.getMainWriter()
-	if main != nil {
-		writers = append(writers, main)
-	}
-
-	slack := config.getSlackWriter()
-	if slack != nil {
-		writers = append(writers, slack)
-	}
-	return writers
 }
 
 type proxyWriteCloser struct {
@@ -216,125 +182,37 @@ func (pwc *proxyWriteCloser) Close() error {
 	return nil
 }
 
-func (config *Configuration) getMainWriter() io.Writer {
-	if config.Quieter {
-		return nil
+func getRegisteredWriters(c *cli.Context) []io.Writer {
+	var writers []io.Writer
+
+	configurers := GetWriterConfigurers()
+
+	for _, wc := range configurers {
+		w := wc.GetWriter(c)
+		if w != nil {
+			writers = append(writers, w)
+		}
 	}
-	switch config.context.Command.Name {
-	case "status":
-		return os.Stdout
-	case "dashboard":
-		return os.Stdout
-	case "server":
-		return os.Stdout
-	}
-	return nil
+
+	return writers
 }
 
-func (config *Configuration) getSlackWriter() io.Writer {
-	if config.context.String("slack-url") == "" {
-		return nil
-	}
+func getRegisteredConfigureredTargets(c *cli.Context) ([]*Target, error) {
+	var targets []*Target
 
-	w := writer.NewSlackWriter(config.context.String("slack-url"))
-
-	if config.context.String("slack-channel") != "" {
-		w.SlackChannel(config.context.String("slack-channel"))
-	}
-	if config.context.String("slack-user") != "" {
-		w.SlackUser(config.context.String("slack-user"))
-	}
-	if config.context.String("slack-icon") != "" {
-		icon := config.context.String("slack-icon")
-		w.SlackIconUrl(writer.SlackIconUrl(icon))
-	}
-
-	return w
-}
-
-func buildTargetsFromFile(c *cli.Context) ([]*Target, error) {
-	filename := c.String("file")
-	targets := make([]*Target, 0)
-
-	timeout := getTimeDurationConfig(c, "timeout")
-
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	r := bufio.NewReader(file)
-	for {
-		line, err := r.ReadString('\n')
+	configurers := GetTargetConfigurers()
+	for _, tc := range configurers {
+		newTargets, err := tc.GetTargets(c)
 		if err != nil {
-			if err == io.EOF {
-				break
-			}
 			return nil, err
 		}
-		line = strings.Replace(line, "\t", " ", 10)
-		line = strings.Trim(line, "\n")
-		line = strings.Trim(line, " ")
-		parts := strings.Split(line, " ")
-		if len(parts) < 2 {
-			return nil, fmt.Errorf("Found invalid line in file [%v]. Must have method and url", line)
-		}
-
-		method := commandMethod(getUpperOrDefault(parts[0], methodGet))
-		if method == "" {
-			return nil, ErrInvalidMethod
-		}
-
-		urlString := parts[1]
-		var t *Target
-		var tErr error
-
-		if len(parts) > 2 {
-			expectedStatus, sError := strconv.Atoi(parts[2])
-			if sError != nil && sError != io.EOF {
-				return nil, fmt.Errorf("Found invalid line in file [%v]. Could not parse expected status %v: error %v", line, parts[2], sError)
-			}
-			t, tErr = newTargetWithExpectation(urlString, expectedStatus)
-		} else {
-
-			expectedStatus := DefaultHttpStatuses[string(method)]
-			t, tErr = newTargetWithExpectation(urlString, expectedStatus)
-		}
-		if tErr != nil {
-			return nil, fmt.Errorf("could not create target with url %v: %v", urlString, tErr)
-		}
-
-		t.Timeout = timeout
-		t.Method = method
-		targets = append(targets, t)
+		targets = append(targets, newTargets...)
 	}
 
 	return targets, nil
 }
 
-func buildTargetsFromArgs(c *cli.Context) ([]*Target, error) {
-
-	timeout := getTimeDurationConfig(c, "timeout")
-	method := commandMethod(getUpperOrDefault(c.String("method"), methodGet))
-	if method == "" {
-		return nil, ErrInvalidMethod
-	}
-
-	targets := make([]*Target, 0)
-	for _, u := range c.Args() {
-		expectedStatus := DefaultHttpStatuses[string(method)]
-		t, err := newTargetWithExpectation(u, expectedStatus)
-		if err != nil {
-			return nil, fmt.Errorf("could not create target with url %v: %v", u, err)
-		}
-		t.Timeout = timeout
-		t.Method = method
-		targets = append(targets, t)
-	}
-	return targets, nil
-}
-
-func newTargetWithExpectation(urlString string, expectedStatus int) (*Target, error) {
+func NewTarget(label string, urlString string, expectedStatus int) (*Target, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
 		return nil, err

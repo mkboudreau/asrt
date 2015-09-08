@@ -8,6 +8,7 @@ import (
 
 	"github.com/mkboudreau/asrt/commands"
 	_ "github.com/mkboudreau/asrt/log"
+	_ "github.com/mkboudreau/asrt/prebuilt"
 	"github.com/mkboudreau/asrt/version"
 )
 
@@ -17,7 +18,7 @@ func main() {
 	app.Name = path.Base(os.Args[0])
 	app.Author = "Michael Boudreau"
 	app.Email = "https://github.com/mkboudreau/asrt"
-	app.Commands = commands.Commands
+	app.Commands = commands.GetCommands()
 	app.CommandNotFound = commands.CommandNotFound
 	app.Usage = "API Status Reporting Tool"
 	app.Version = version.Version + " (" + version.GitCommit + ")"

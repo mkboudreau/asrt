@@ -7,7 +7,7 @@ import (
 	"github.com/mkboudreau/asrt/config"
 )
 
-var StatusFlags = []cli.Flag{
+var commonFlags = []cli.Flag{
 	cli.BoolFlag{
 		EnvVar: "DEBUG",
 		Name:   "debug, d",
@@ -17,11 +17,6 @@ var StatusFlags = []cli.Flag{
 		Name:  "timeout, t",
 		Usage: "Timeout for client to wait for connections. 0 = no timeout. Format is Golang time.Duration.",
 		Value: "0",
-	},
-	cli.StringFlag{
-		Name:  "file, f",
-		Usage: "Use file with list of URLs, HTTP Methods, and optional HTTP Headers",
-		Value: "",
 	},
 	cli.BoolFlag{
 		Name:  "failures-only",
@@ -48,10 +43,6 @@ var StatusFlags = []cli.Flag{
 		Name:  "quiet, q",
 		Usage: "Quiet results into just the statuses. Usually useful in aggregate -qa",
 	},
-	cli.BoolFlag{
-		Name:  "quieter, qq",
-		Usage: "Turns off standard output",
-	},
 	cli.IntFlag{
 		Name:  "workers, w",
 		Usage: "Number of workers/goroutines to use to hit the sites",
@@ -62,60 +53,73 @@ var StatusFlags = []cli.Flag{
 		Usage: fmt.Sprint("Use HTTP Method for all URLs on command line. Does not affect file inputs. Valid values:", config.ValidMethods),
 		Value: "GET",
 	},
-	cli.StringFlag{
-		Name:  "slack-url",
-		Usage: "Slack incoming webhook URL. Setting this parameter enables slack notifications",
-	},
-	cli.StringFlag{
-		Name:  "slack-channel",
-		Usage: "Overrides the default channel for slack notifications. slack-url is required to enable slack integration.",
-	},
-	cli.StringFlag{
-		Name:  "slack-user",
-		Usage: "Overrides the username this application posts as for slack notifications. slack-url is required to enable slack integration.",
-	},
-	cli.StringFlag{
-		Name:  "slack-icon",
-		Usage: "Overrides the icon used for this application for slack notifications. slack-url is required to enable slack integration.",
-	},
 }
 
-var DashboardFlags = append(StatusFlags,
+var statusFlags = append(commonFlags, getRegisteredConfigurers()...)
+
+var dashboardFlags = append(statusFlags,
 	cli.StringFlag{
 		Name:  "rate, r",
 		Usage: "Rate between refreshes of statuses. Only effective for dashboard settings. 0 = no refresh. Format is Golang time.Duration.",
 		Value: "30s",
 	})
 
-var ServerFlags = append(DashboardFlags,
+var serverFlags = append(dashboardFlags,
 	cli.StringFlag{
 		Name:  "port",
 		Usage: "Port to listen on",
 		Value: "7070",
 	})
 
-var Commands = []cli.Command{
+func getRegisteredConfigurers() []cli.Flag {
+	var flags []cli.Flag
+	for _, c := range config.GetAllConfigurers() {
+		flags = append(flags, c.GetCommandFlags()...)
+	}
+	return flags
+}
+
+var commands = []cli.Command{
 	{
 		Name:        "status",
 		Usage:       "Print simple status lines for the API list",
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdStatus,
-		Flags:       StatusFlags,
+		Flags:       statusFlags,
 	},
 	{
 		Name:        "dashboard",
 		Usage:       "Print a dashboard that refreshes for the API list",
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdDashboard,
-		Flags:       DashboardFlags,
+		Flags:       dashboardFlags,
 	},
 	{
 		Name:        "server",
 		Usage:       "Listen on a port for requests",
 		Description: "Argument is one ore more URLs if a file is not provided.",
 		Action:      cmdServer,
-		Flags:       ServerFlags,
+		Flags:       serverFlags,
 	},
+}
+
+func GetCommands() []cli.Command {
+	return commands
+}
+
+func GetCommand(commandName string) cli.Command {
+	cmdarr := GetCommands()
+	for _, cmd := range cmdarr {
+		if cmd.Name == commandName {
+			return cmd
+		}
+	}
+	return cli.Command{}
+}
+
+func GetFlagsForCommand(commandName string) []cli.Flag {
+	cmd := GetCommand(commandName)
+	return cmd.Flags
 }
 
 func CommandNotFound(c *cli.Context, command string) {
