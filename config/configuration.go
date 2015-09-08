@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"reflect"
 	"time"
@@ -34,15 +33,6 @@ var DefaultHttpStatuses = map[string]int{
 }
 
 const (
-	MethodGet    CommandMethod = "GET"
-	MethodPost                 = "POST"
-	MethodPut                  = "PUT"
-	MethodDelete               = "DELETE"
-	MethodHead                 = "HEAD"
-	MethodPatch                = "PATCH"
-)
-
-const (
 	FormatCSV  OutputFormat = "CSV"
 	FormatTAB               = "TAB"
 	FormatJSON              = "JSON"
@@ -63,16 +53,6 @@ type Configuration struct {
 	Targets         []*Target
 }
 
-type Target struct {
-	Label          string
-	Method         CommandMethod
-	Timeout        time.Duration
-	ExpectedStatus int
-	URL            string
-	Headers        map[string]string
-}
-
-type CommandMethod string
 type OutputFormat string
 
 func GetConfiguration(c *cli.Context) (*Configuration, error) {
@@ -210,22 +190,4 @@ func getRegisteredConfigureredTargets(c *cli.Context) ([]*Target, error) {
 	}
 
 	return targets, nil
-}
-
-func NewTarget(label string, urlString string, expectedStatus int) (*Target, error) {
-	u, err := url.Parse(urlString)
-	if err != nil {
-		return nil, err
-	}
-
-	if u.Scheme == "" {
-		u.Scheme = "http"
-	}
-
-	t := &Target{
-		URL:            u.String(),
-		ExpectedStatus: expectedStatus,
-	}
-
-	return t, nil
 }

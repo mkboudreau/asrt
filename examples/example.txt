@@ -1,3 +1,8 @@
-GET www.microsoft.com
-GET www.yahoo.com 200
-GET www.dallascowboys.com/helloworld 404
+www.microsoft.com
+www.ibm.com|GET
+www.yahoo.com|200
+www.google.com|GET|200
+www.dallascowboys.com/helloworld|GET|404
+http://httpstat.us/202|POST|202
+http://httpstat.us/201|POST
+http://httpstat.us/400|PUT|400

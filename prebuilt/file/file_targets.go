@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/codegangsta/cli"
@@ -57,40 +56,15 @@ func (tc *targetFromFile) GetTargets(c *cli.Context) ([]*config.Target, error) {
 			}
 			return nil, err
 		}
-		line = strings.Replace(line, "\t", " ", 10)
 		line = strings.Trim(line, "\n")
 		line = strings.Trim(line, " ")
-		parts := strings.Split(line, " ")
-		if len(parts) < 2 {
-			return nil, fmt.Errorf("Found invalid line in file [%v]. Must have method and url", line)
-		}
 
-		method := config.CommandMethod(config.GetUpperOrDefault(parts[0], config.MethodGet))
-		if method == "" {
-			return nil, config.ErrInvalidMethod
-		}
-
-		urlString := parts[1]
-		var t *config.Target
-		var tErr error
-
-		if len(parts) > 2 {
-			expectedStatus, sError := strconv.Atoi(parts[2])
-			if sError != nil && sError != io.EOF {
-				return nil, fmt.Errorf("Found invalid line in file [%v]. Could not parse expected status %v: error %v", line, parts[2], sError)
-			}
-			t, tErr = config.NewTarget("", urlString, expectedStatus)
-		} else {
-
-			expectedStatus := config.DefaultHttpStatuses[string(method)]
-			t, tErr = config.NewTarget("", urlString, expectedStatus)
-		}
+		t, tErr := config.ParseTarget(line)
 		if tErr != nil {
-			return nil, fmt.Errorf("could not create target with url %v: %v", urlString, tErr)
+			return nil, fmt.Errorf("could not create target from string %v: %v", line, tErr)
 		}
 
 		t.Timeout = timeout
-		t.Method = method
 		targets = append(targets, t)
 	}
 

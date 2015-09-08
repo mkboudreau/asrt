@@ -1,1 +1,1 @@
-GET www.microsoft.com
+www.microsoft.com

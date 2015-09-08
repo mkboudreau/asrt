@@ -64,35 +64,66 @@ GET www.google.com 200
 
 ### Options
 - `-d` or `--debug`: turns on the logger
+
+#### Input-related Options
+- `-f` or `--file`: input file (see formats below). at least a file or urls on the command line must be specified.
+
+#### Processing-related Options
+- `-w` or `--workers`: this is the number of workers or goroutines used to connect to the client sites.
 - `-t` or `--timeout`: timeout for connections in time.Duration format. defaults to no timeout.
-- `-r` or `--rate`: refresh rate for dashboard only in time.Duration format. defaults to 30s.
-- `-f` or `--file`: input file (see formate below). at least a file or urls on the command line must be specified.
-- `-fmt` or `--format`: the format to be used for output. valid values are CSV,TAB,JSON. default is TAB.
 - `-a` or `--aggregate`: aggregates all sites into a single true/false response. includes the total sites unless -q is specified
+- `--failures-only`: only submits data to the writer upon failure. Useful when using something like slack since you may only want to perform an http.POST upon a failure.
+
+#### Output-related Options
+- `-fmt` or `--format`: the format to be used for output. valid values are CSV,TAB,JSON. default is TAB.
 - `-q` or `--quiet`: minimizes the response and contains no header nor footer.
 - `-qq` or `--quieter`: turns off standard output, superceding -q. useful for scripts.
 - `-p` or `--pretty`: makes response have some formatting using escape codes. Mutually exclusive with markdown.
 - `-md` or `--markdown`: makes response have some formatting using markdown. Mutually exclusive with pretty.
-- `-w` or `--workers`: this is the number of workers or goroutines used to connect to the client sites.
-- `-m` or `--method`: the method to be used for all urls given on the command line. valid values are GET,POST,PUT,DELETE,HEAD,PATCH. default is GET. (not implemented yet)
-- `--failures-only`: only submits data to the writer upon failure. Useful when using something like slack since you may only want to perform an http.POST upon a failure.
-- `--port`: set port to listen on (only works with server command). default is 7070
 - `--slack-url`: setting this parameter enables slack integration using incoming webhook url specified.
 - `--slack-user`: overrides the user this tool will post as to slack. only works if slack-url is specified.
 - `--slack-channel`: overrides the channel this tool will post to on slack. only works if slack-url is specified.
 - `--slack-icon`: overrides the icon this tool will use when posting to slack. only works if slack-url is specified.
 
-### Input File Format
-- Each line must contain a method and a url.
-- Each line may optionally include an expected status code.
-- These values must be in order and separated with either a tab or a space.
+#### Options for Dashboard Command
+- `-r` or `--rate`: refresh rate for dashboard only in time.Duration format. defaults to 30s.
+
+#### Options for Server Command
+- `-r` or `--rate`: refresh rate for dashboard only in time.Duration format. defaults to 30s.
+- `--port`: set port to listen on (only works with server command). default is 7070
+
+### Input Format for Target Endpoints
+
+`URL|METHOD|STATUS_CODE|LABEL`
+
+- The input is order dependent.
+- URL is the only field that is required
+- Method, status code and label are all optional
+- Method must be one of GET, POST, PUT, PATCH, HEAD, OPTIONS
+- Status code must be an integer
+- Label can only have spaces if it is within quotes
+- *if the url has the | character, it should also be placed within quotes*
 - Examples
-    + `GET www.yahoo.com`
-    + `GET www.yahoo.com 200`
-    + `GET www.yahoo.com/hello 404`
-    + `POST www.microsoft.com/hello 404`
-    + `POST www.microsoft.com 201`
-    + `POST www.microsoft.com`
+    + `www.yahoo.com`
+    + `www.yahoo.com|200`
+    + `www.yahoo.com|GET|200`
+    + `www.microsoft.com|POST`
+    + `www.microsoft.com|POST|201`
+    + `www.yahoo.com/not_found|GET|404`
+    + `data.asrt.io|GET|200|"Main ASRT API Endpoint"`
+
+### Differences between passing input via command line parameter and by input file
+
+Command line parameter should be in a single line and each target be separated by spaces.
+Example: `asrt www.yahoo.com www.microsoft.com|POST|201 data.asrt.io|GET|200|"Main ASRT API Endpoint"`
+
+Input file should have one line per target.
+Example:
+`
+www.yahoo.com
+www.microsoft.com|POST|201
+data.asrt.io|GET|200|"Main ASRT API Endpoint"
+`
 
 ## TODO
 
