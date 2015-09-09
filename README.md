@@ -129,6 +129,5 @@ data.asrt.io|GET|200|"Main ASRT API Endpoint"
 
 The following items are still outstanding:
 - Add support for headers, both as an option and from within a file
-- Implement `-m` option for customizing the method
 - Add more tests!
 - Add ability to pipe input
