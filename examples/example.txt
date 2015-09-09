@@ -3,6 +3,6 @@ www.ibm.com|GET
 www.yahoo.com|200
 www.google.com|GET|200
 www.dallascowboys.com/helloworld|GET|404
-http://httpstat.us/202|POST|202
-http://httpstat.us/201|POST
-http://httpstat.us/400|PUT|400
+http://httpstat.us/202|POST|202|"Post 202 Status"
+http://httpstat.us/201|POST|'Post 201 Status'
+http://httpstat.us/400|PUT|400|BadRequest

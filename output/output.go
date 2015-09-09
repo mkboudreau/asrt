@@ -15,22 +15,32 @@ const (
 )
 
 type Result struct {
-	Success   bool   `json:"ok"`
-	Error     error  `json:"error,omitempty"`
-	Expected  string `json:"expectation,omitempty"`
-	Actual    string `json:"actual,omitempty"`
-	Url       string `json:"url,omitempty"`
-	Timestamp string `json:"timestamp,omitempty"`
+	Success   bool                   `json:"ok"`
+	Error     error                  `json:"error,omitempty"`
+	Expected  string                 `json:"expectation,omitempty"`
+	Actual    string                 `json:"actual,omitempty"`
+	Url       string                 `json:"url,omitempty"`
+	Label     string                 `json:"label,omitempty"`
+	Timestamp string                 `json:"timestamp,omitempty"`
+	Extra     map[string]interface{} `json:"extra,omitempty"`
 }
 
-func NewResult(success bool, err error, expected string, actual string, url string) *Result {
+func NewResult(success bool, err error, expected string, actual string, url string, label string) *Result {
 	return &Result{
 		Success:  success,
 		Error:    err,
 		Expected: expected,
 		Actual:   actual,
 		Url:      url,
+		Label:    label,
 	}
+}
+
+func (r *Result) AddExtra(key string, data interface{}) {
+	if r.Extra == nil {
+		r.Extra = make(map[string]interface{})
+	}
+	r.Extra[key] = data
 }
 
 type ResultFormatter interface {

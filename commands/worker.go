@@ -20,7 +20,10 @@ func processTargets(incomingTargets <-chan *config.Target, resultChannel chan<- 
 		go func(target *config.Target) {
 			execResult := execution.ExecuteWithTimoutAndHeaders(string(target.Method), target.URL, target.Timeout, target.Headers, target.ExpectedStatus)
 
-			result := output.NewResult(execResult.Success(), execResult.Error, strconv.Itoa(execResult.Expected), strconv.Itoa(execResult.Actual), execResult.URL)
+			result := output.NewResult(execResult.Success(), execResult.Error, strconv.Itoa(execResult.Expected), strconv.Itoa(execResult.Actual), execResult.URL, target.Label)
+			if target.Extra != nil {
+				result.Extra = target.Extra
+			}
 			result.Timestamp = output.NewTimeStringForJSON(time.Now())
 			resultChannel <- result
 			wg.Done()
@@ -60,8 +63,8 @@ func processEachResult(resultChannel <-chan *output.Result, formatter output.Res
 }
 
 func processAggregatedResult(resultChannel <-chan *output.Result, formatter output.ResultFormatter, w io.Writer, onlyFailures bool) int {
+	var results []*output.Result
 	exitStatus := 0
-	results := make([]*output.Result, 0)
 	for r := range resultChannel {
 		results = append(results, r)
 		if !r.Success {

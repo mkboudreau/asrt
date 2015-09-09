@@ -26,8 +26,10 @@ type Target struct {
 	ExpectedStatus int
 	URL            string
 	Headers        map[string]string
+	Extra          map[string]interface{}
 }
 
+// NewTarget creates a new config.Target object with the required fields.
 func NewTarget(label string, urlString string, method CommandMethod, expectedStatus int) (*Target, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
@@ -48,6 +50,15 @@ func NewTarget(label string, urlString string, method CommandMethod, expectedSta
 	return t, nil
 }
 
+// AddExtra is for writers of TargetConfigurers. This enables a way to attach data or track data from a target to its output.
+func (t *Target) AddExtra(key string, data interface{}) {
+	if t.Extra == nil {
+		t.Extra = make(map[string]interface{})
+	}
+	t.Extra[key] = data
+}
+
+// ParseTarget takes a string of format <url>|<method>|<status_code>|<label> and parses it into a config.Target object. URL is the only required field.
 func ParseTarget(targetString string) (*Target, error) {
 	url, theRest := extractURL(targetString)
 	var method CommandMethod
