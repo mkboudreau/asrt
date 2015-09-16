@@ -51,8 +51,9 @@ This tool is simple. Just dive in and start using it.
 
 Example File
 ```
-GET www.yahoo.com
-GET www.google.com 200
+www.yahoo.com
+www.yahoo.com|200
+www.yahoo.com|GET|200
 ```
 
 ## Configuration
@@ -110,6 +111,7 @@ GET www.google.com 200
     + `www.microsoft.com|POST`
     + `www.microsoft.com|POST|201`
     + `www.yahoo.com/not_found|GET|404`
+    + `www.yahoo.com/not_found|GET|404|{H}"Authorization: Bearer 123"`
     + `data.asrt.io|GET|200|"Main ASRT API Endpoint"`
 
 ### Differences between passing input via command line parameter and by input file
