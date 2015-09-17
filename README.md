@@ -85,6 +85,9 @@ www.yahoo.com|GET|200
 - `--slack-user`: overrides the user this tool will post as to slack. only works if slack-url is specified.
 - `--slack-channel`: overrides the channel this tool will post to on slack. only works if slack-url is specified.
 - `--slack-icon`: overrides the icon this tool will use when posting to slack. only works if slack-url is specified.
+- `--http-url`: setting this parameter enables generic http integration for sending output data.
+- `--http-method`: sets the http method to use. default is POST. only works if http-url is specified.
+- `--http-auth`: sets the http Authorization header. only works if http-url is specified.
 
 #### Options for Dashboard Command
 - `-r` or `--rate`: refresh rate for dashboard only in time.Duration format. defaults to 30s.
@@ -111,7 +114,7 @@ www.yahoo.com|GET|200
     + `www.microsoft.com|POST`
     + `www.microsoft.com|POST|201`
     + `www.yahoo.com/not_found|GET|404`
-    + `www.yahoo.com/not_found|GET|404|{H}"Authorization: Bearer 123"`
+    + `www.yahoo.com/not_found|GET|404|{H}"Authorization: Bearer 123"` (coming soon)
     + `data.asrt.io|GET|200|"Main ASRT API Endpoint"`
 
 ### Differences between passing input via command line parameter and by input file
