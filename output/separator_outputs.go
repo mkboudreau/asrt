@@ -62,7 +62,7 @@ func separatorResultForQuietPretty(result *Result, separator string) string {
 
 // Normal Result
 func separatorResult(result *Result, separator string) string {
-	return fmt.Sprintf("%v%v%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Url)
+	return fmt.Sprintf("%v%v%v%v%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Label, separator, result.Url)
 }
 
 // Normal Result
@@ -73,7 +73,7 @@ func separatorResultForPretty(result *Result, separator string) string {
 		statusColor = colorRed
 	}
 
-	return fmt.Sprintf("%v%v%v%v%v%v%v%v%v", statusColor, result.StatusMessage(), colorReset, separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Url)
+	return fmt.Sprintf("%v%v%v%v%v%v%v%v%v%v%v", statusColor, result.StatusMessage(), colorReset, separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Label, separator, result.Url)
 }
 
 // Normal Result
@@ -85,7 +85,7 @@ func separatorResultForQuiet(result *Result, separator string) string {
 // Normal Result
 // +markdown
 func separatorResultForMarkdown(result *Result, separator string) string {
-	return fmt.Sprintf("*%v*%v%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Url)
+	return fmt.Sprintf("*%v*%v%v%v%v%v%v%v%v", result.StatusMessage(), separator, result.Expected, separator, result.StatusCodeActual(), separator, result.Label, separator, result.Url)
 }
 
 // Normal Result
