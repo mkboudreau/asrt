@@ -55,9 +55,16 @@ var commonFlags = []cli.Flag{
 	},
 }
 
-var statusFlags = append(commonFlags, getRegisteredConfigurers()...)
+var baseFlags = append(commonFlags, getRegisteredConfigurers()...)
 
-var dashboardFlags = append(statusFlags,
+var statusFlags = append(baseFlags,
+	cli.StringFlag{
+		Name:  "retry-until, ru",
+		Usage: "Retry and attempt to get full success. Will return once all is success or this duration is reached. 0 = no retry. Format is Golang time.Duration",
+		Value: "0s",
+	})
+
+var dashboardFlags = append(baseFlags,
 	cli.StringFlag{
 		Name:  "rate, r",
 		Usage: "Rate between refreshes of statuses. Only effective for dashboard settings. 0 = no refresh. Format is Golang time.Duration.",

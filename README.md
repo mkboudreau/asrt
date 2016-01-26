@@ -89,6 +89,9 @@ www.yahoo.com|GET|200
 - `--http-method`: sets the http method to use. default is POST. only works if http-url is specified.
 - `--http-auth`: sets the http Authorization header. only works if http-url is specified.
 
+#### Options for Status Command
+- `-ru` or `--retry-until`: retry until a time.Duration. Status command will return result once it gets 100% success from all its targets or until this time.Duration elapses. If time.Duration is reached, it will return whatever the last response was. 
+
 #### Options for Dashboard Command
 - `-r` or `--rate`: refresh rate for dashboard only in time.Duration format. defaults to 30s.
 
