@@ -58,19 +58,26 @@ func (t *Target) AddExtra(key string, data interface{}) {
 	t.Extra[key] = data
 }
 
-// ParseTarget takes a string of format <url>|<method>|<status_code>|<label> and parses it into a config.Target object. URL is the only required field.
+// ParseTarget takes a string of format <url>|<method>|<status_code>|<label>|<header> and parses it into a config.Target object. URL is the only required field.
 func ParseTarget(targetString string) (*Target, error) {
 	url, theRest := extractURL(targetString)
 	var method CommandMethod
 	var label string
 	var statusCode int
+	var headers = make(map[string]string)
+
 	for _, part := range theRest {
 		if string(method) == "" && isHttpMethod(part) {
 			method = extractMethod(part)
 		} else if statusCode == 0 && isStatusCode(part) {
 			statusCode = extractStatusCode(part, method)
-		} else if label == "" {
+		} else if !isHeader(part) && label == "" {
 			label = extractLabel(part)
+		} else if isHeader(part) {
+			headerKey, headerValue := extractHeader(part)
+			if headerKey != "" {
+				headers[headerKey] = headerValue
+			}
 		}
 	}
 	if string(method) == "" {
@@ -85,6 +92,10 @@ func ParseTarget(targetString string) (*Target, error) {
 		return nil, fmt.Errorf("could not create target with url %v: %v", url, err)
 	}
 	t.Method = method
+	if len(headers) > 0 {
+		t.Headers = headers
+	}
+
 	return t, nil
 }
 
@@ -149,6 +160,24 @@ func isHttpMethod(method string) bool {
 	}
 }
 
+func isHeader(header string) bool {
+	return strings.HasPrefix(header, "{H}")
+}
+
+func extractHeader(headerWithPrefix string) (string, string) {
+	headerString := strings.TrimPrefix(headerWithPrefix, "{H}")
+
+	header := extractQuotedString(headerString)
+	headerParts := strings.SplitN(header, ":", 2)
+	if len(headerParts) == 1 {
+		return header, ""
+	} else if len(headerParts) != 2 {
+		return "", ""
+	}
+
+	return strings.TrimSpace(headerParts[0]), strings.TrimSpace(headerParts[1])
+}
+
 func extractStatusCode(statusCodeString string, currentMethod CommandMethod) int {
 	if statusCode, err := strconv.Atoi(statusCodeString); err == nil {
 		return statusCode
@@ -163,11 +192,14 @@ func isStatusCode(statusCodeString string) bool {
 }
 
 func extractLabel(labelString string) string {
-	if strings.HasPrefix(labelString, "\"") && strings.HasSuffix(labelString, "\"") {
-		return labelString[1 : len(labelString)-1]
-	} else if strings.HasPrefix(labelString, "'") && strings.HasSuffix(labelString, "'") {
-		return labelString[1 : len(labelString)-1]
+	return extractQuotedString(labelString)
+}
+func extractQuotedString(quoted string) string {
+	if strings.HasPrefix(quoted, "\"") && strings.HasSuffix(quoted, "\"") {
+		return quoted[1 : len(quoted)-1]
+	} else if strings.HasPrefix(quoted, "'") && strings.HasSuffix(quoted, "'") {
+		return quoted[1 : len(quoted)-1]
 	} else {
-		return labelString
+		return quoted
 	}
 }

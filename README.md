@@ -101,7 +101,7 @@ www.yahoo.com|GET|200
 
 ### Input Format for Target Endpoints
 
-`URL|METHOD|STATUS_CODE|LABEL`
+`URL|METHOD|STATUS_CODE|LABEL|HEADER...`
 
 - The input is order dependent.
 - URL is the only field that is required
@@ -109,6 +109,7 @@ www.yahoo.com|GET|200
 - Method must be one of GET, POST, PUT, PATCH, HEAD, OPTIONS
 - Status code must be an integer
 - Label can only have spaces if it is within quotes
+- Headers take the same format and rules as a label (mostly), so to differentiate them, a header must contain the {H} prefix. It is the last element and there can be as many as you need, each separated by a '|'
 - *if the url has the | character, it should also be placed within quotes*
 - Examples
     + `www.yahoo.com`
