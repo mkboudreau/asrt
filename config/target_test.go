@@ -36,6 +36,7 @@ var testCasesForTargetParsing = []struct {
 	{"www.yahoo.com|{H}Test:", &expectation{"http://www.yahoo.com", "", "GET", 200, map[string]string{"Test": ""}}},
 	{"www.yahoo.com|{H}Test: Value", &expectation{"http://www.yahoo.com", "", "GET", 200, map[string]string{"Test": "Value"}}},
 	{"www.yahoo.com|{H}Test: Value|{H}Another: V", &expectation{"http://www.yahoo.com", "", "GET", 200, map[string]string{"Test": "Value", "Another": "V"}}},
+	{"www.yahoo.com|{H}Test: Value|{H}\"Another: X Y Z\"", &expectation{"http://www.yahoo.com", "", "GET", 200, map[string]string{"Test": "Value", "Another": "X Y Z"}}},
 }
 
 func TestTargetParsing(t *testing.T) {
