@@ -2,6 +2,7 @@ package config
 
 import (
 	"io"
+	"log"
 
 	"github.com/codegangsta/cli"
 )
@@ -24,6 +25,7 @@ type TargetConfigurer interface {
 
 // RegisterTargetConfigurer ...
 func RegisterTargetConfigurer(tc TargetConfigurer) {
+	log.Println("Registering Target Configurer:", tc)
 	if tc != nil {
 		registeredTargetConfigurers[tc] = true
 	}
@@ -37,6 +39,7 @@ type WriterConfigurer interface {
 
 // RegisterWriterConfigurer ...
 func RegisterWriterConfigurer(wc WriterConfigurer) {
+	log.Println("Registering Writer Configurer:", wc)
 	if wc != nil {
 		registeredWriterConfigurers[wc] = true
 	}

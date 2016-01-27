@@ -55,28 +55,36 @@ var commonFlags = []cli.Flag{
 	},
 }
 
-var baseFlags = append(commonFlags, getRegisteredConfigurers()...)
+func getBaseFlags() []cli.Flag {
+	return append(commonFlags, getRegisteredConfigurers()...)
+}
 
-var statusFlags = append(baseFlags,
-	cli.StringFlag{
-		Name:  "retry-until, ru",
-		Usage: "Retry and attempt to get full success. Will return once all is success or this duration is reached. 0 = no retry. Format is Golang time.Duration",
-		Value: "0s",
-	})
+func getStatusFlags() []cli.Flag {
+	return append(getBaseFlags(),
+		cli.StringFlag{
+			Name:  "retry-until, ru",
+			Usage: "Retry and attempt to get full success. Will return once all is success or this duration is reached. 0 = no retry. Format is Golang time.Duration",
+			Value: "0s",
+		})
+}
 
-var dashboardFlags = append(baseFlags,
-	cli.StringFlag{
-		Name:  "rate, r",
-		Usage: "Rate between refreshes of statuses. Only effective for dashboard settings. 0 = no refresh. Format is Golang time.Duration.",
-		Value: "30s",
-	})
+func getDashboardFlags() []cli.Flag {
+	return append(getBaseFlags(),
+		cli.StringFlag{
+			Name:  "rate, r",
+			Usage: "Rate between refreshes of statuses. Only effective for dashboard settings. 0 = no refresh. Format is Golang time.Duration.",
+			Value: "30s",
+		})
+}
 
-var serverFlags = append(dashboardFlags,
-	cli.StringFlag{
-		Name:  "port",
-		Usage: "Port to listen on",
-		Value: "7070",
-	})
+func getServerFlags() []cli.Flag {
+	return append(getDashboardFlags(),
+		cli.StringFlag{
+			Name:  "port",
+			Usage: "Port to listen on",
+			Value: "7070",
+		})
+}
 
 func getRegisteredConfigurers() []cli.Flag {
 	var flags []cli.Flag
@@ -86,32 +94,30 @@ func getRegisteredConfigurers() []cli.Flag {
 	return flags
 }
 
-var commands = []cli.Command{
-	{
-		Name:        "status",
-		Usage:       "Print simple status lines for the API list",
-		Description: "Argument is one ore more URLs if a file is not provided.",
-		Action:      cmdStatus,
-		Flags:       statusFlags,
-	},
-	{
-		Name:        "dashboard",
-		Usage:       "Print a dashboard that refreshes for the API list",
-		Description: "Argument is one ore more URLs if a file is not provided.",
-		Action:      cmdDashboard,
-		Flags:       dashboardFlags,
-	},
-	{
-		Name:        "server",
-		Usage:       "Listen on a port for requests",
-		Description: "Argument is one ore more URLs if a file is not provided.",
-		Action:      cmdServer,
-		Flags:       serverFlags,
-	},
-}
-
 func GetCommands() []cli.Command {
-	return commands
+	return []cli.Command{
+		{
+			Name:        "status",
+			Usage:       "Print simple status lines for the API list",
+			Description: "Argument is one or more URLs if a file is not provided.",
+			Action:      cmdStatus,
+			Flags:       getStatusFlags(),
+		},
+		{
+			Name:        "dashboard",
+			Usage:       "Print a dashboard that refreshes for the API list",
+			Description: "Argument is one or more URLs if a file is not provided.",
+			Action:      cmdDashboard,
+			Flags:       getDashboardFlags(),
+		},
+		{
+			Name:        "server",
+			Usage:       "Listen on a port for requests",
+			Description: "Argument is one or more URLs if a file is not provided.",
+			Action:      cmdServer,
+			Flags:       getServerFlags(),
+		},
+	}
 }
 
 func GetCommand(commandName string) cli.Command {
