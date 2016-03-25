@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/config"
@@ -33,11 +34,9 @@ func (tc *targetFromFile) GetCommandFlags() []cli.Flag {
 }
 
 func (tc *targetFromFile) GetTargets(c *cli.Context) ([]*config.Target, error) {
-	var targets []*config.Target
-
 	filename := c.String("file")
 	if filename == "" {
-		return targets, nil
+		return []*config.Target{}, nil
 	}
 
 	timeout := config.GetTimeDurationConfig(c, "timeout")
@@ -47,7 +46,12 @@ func (tc *targetFromFile) GetTargets(c *cli.Context) ([]*config.Target, error) {
 		return nil, err
 	}
 
-	r := bufio.NewReader(file)
+	return tc.targetsFromReaderWithTimeout(file, timeout)
+}
+
+func (tc *targetFromFile) targetsFromReaderWithTimeout(reader io.Reader, timeout time.Duration) ([]*config.Target, error) {
+	var targets []*config.Target
+	r := bufio.NewReader(reader)
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
@@ -56,8 +60,15 @@ func (tc *targetFromFile) GetTargets(c *cli.Context) ([]*config.Target, error) {
 			}
 			return nil, err
 		}
-		line = strings.Trim(line, "\n")
-		line = strings.Trim(line, " ")
+		line = strings.Trim(line, "\n\t ")
+
+		if strings.HasPrefix(line, "#") {
+			// ignore
+			continue
+		} else if len(line) == 0 {
+			// ignore
+			continue
+		}
 
 		t, tErr := config.ParseTarget(line)
 		if tErr != nil {
