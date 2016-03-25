@@ -118,7 +118,7 @@ www.yahoo.com|GET|200
     + `www.microsoft.com|POST`
     + `www.microsoft.com|POST|201`
     + `www.yahoo.com/not_found|GET|404`
-    + `www.yahoo.com/not_found|GET|404|{H}"Authorization: Bearer 123"` (coming soon)
+    + `www.yahoo.com/not_found|GET|404|{H}"Authorization: Bearer 123"`
     + `data.asrt.io|GET|200|"Main ASRT API Endpoint"`
 
 ### Differences between passing input via command line parameter and by input file
@@ -137,6 +137,5 @@ data.asrt.io|GET|200|"Main ASRT API Endpoint"
 ## TODO
 
 The following items are still outstanding:
-- Add support for headers, both as an option and from within a file
 - Add more tests!
 - Add ability to pipe input
