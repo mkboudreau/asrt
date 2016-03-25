@@ -2,6 +2,8 @@ package execution
 
 import (
 	"crypto/tls"
+	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -56,11 +58,16 @@ func execute(method string, url string, timeout time.Duration, headers map[strin
 	}
 
 	resp, respErr := connectWithInsecureCert(req, timeout)
+	log.Println("Connecting")
+	log.Printf(" - Request: %+v/n", req)
+	log.Printf(" - Response: %+v\n", resp)
+	log.Printf(" - Error: %+v\n", respErr)
 	if respErr != nil {
 		return 0, respErr
 	}
-	defer resp.Body.Close()
-
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	return resp.StatusCode, nil
 }
 
@@ -81,8 +88,17 @@ func buildRequest(method string, url string, headers map[string]string) (*http.R
 }
 
 func connectWithInsecureCert(req *http.Request, timeout time.Duration) (*http.Response, error) {
+	//tr := &http.Transport{
+	//	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	//}
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 	}
 
 	client := &http.Client{Transport: tr, Timeout: timeout}
