@@ -22,7 +22,7 @@ const (
 
 const (
 	DefaultSlackIcon    SlackIconUrl = SlackIconStatusIndicator
-	DefaultSlackChannel string       = "#general"
+	DefaultSlackChannel string       = ""
 	DefaultSlackUser    string       = "asrt"
 )
 
@@ -38,10 +38,10 @@ type SlackWriter struct {
 }
 
 type slackPayload struct {
-	Channel string       `json:"channel"`
-	User    string       `json:"username"`
+	Channel string       `json:"channel,omitempty"`
+	User    string       `json:"username,omitempty"`
 	Text    string       `json:"text"`
-	Icon    SlackIconUrl `json:"icon_url"`
+	Icon    SlackIconUrl `json:"icon_url,omitempty"`
 }
 
 // Creates a new SlackWriter with sensible defaults
