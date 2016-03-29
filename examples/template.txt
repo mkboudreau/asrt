@@ -1,0 +1,8 @@
+{{.Label}} is {{if .Success}}*up*{{else}}*down!*{{end}}
+```
+URL:             {{.Url}}
+Expected Status: {{.Expected}}
+Actual Status:   {{.Actual}}
+Timestamp:       {{.Timestamp}}
+Error (if any):  {{.Error}}
+```

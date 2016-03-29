@@ -43,7 +43,7 @@ This tool is simple. Just dive in and start using it.
 
 - Read from a file and pretty print json
 
-`asrt status -p -fmt json -f sites.list`
+`asrt status -fmt json -f sites.list`
 
 - Read from a file and refresh every 1 minute with json
 
@@ -52,6 +52,15 @@ This tool is simple. Just dive in and start using it.
 - Read from a file and expose online with data refresh every 1 minute
 
 `asrt server -fmt json -r 1m -f sites.list`
+
+- Custom formatting using Go text template syntax.
+
+`asrt status -f sites.list -fmt template="{{ .Label }} is {{ .Success }}" `
+
+- Custom formatting using a file with Go text template syntax.
+
+`asrt status -f sites.list -fmt template-file=my-output.txt`
+
 
 Example File
 ```
@@ -81,7 +90,7 @@ www.yahoo.com|GET|200
 
 #### Output-related Options
 - `-fmt` or `--format`: the format to be used for output. valid values are: 
-	CSV, CSV-MD, CSV-NO-COLOR, TAB, TAB-MD, TAB-NO-COLOR, JSON, JSON-COMPACT, TEMPLATE="{{...}}}. default is TAB.
+	CSV, CSV-MD, CSV-NO-COLOR, TAB, TAB-MD, TAB-NO-COLOR, JSON, JSON-COMPACT, TEMPLATE="{{...}}}, TEMPLATE-FILE=<filename>. default is TAB.
 - `--no-headers`: minimizes the response and contains no header nor footer.
 - `-q` or `--quiet`: turns off standard output, useful for scripts.
 - `--slack-url`: setting this parameter enables slack integration using incoming webhook url specified.
@@ -136,6 +145,24 @@ www.yahoo.com
 www.microsoft.com|POST|201
 data.asrt.io|GET|200|"Main ASRT API Endpoint"
 `
+
+### Go Text Templating
+
+Using the `--fmt template=...` will cause the template text on the right side of "template=" to get parsed according to the Go standard library's text templating.
+
+	type Result struct {
+		Success   bool
+		Error     error
+		Expected  string
+		Actual    string
+		Url       string
+		Label     string
+		Timestamp string
+		Extra     map[string]interface{} 
+	}
+
+
+See https://golang.org/pkg/text/template/
 
 ## TODO
 
