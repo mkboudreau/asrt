@@ -4,6 +4,10 @@ build:
 	go fmt ./...
 	go build ./...
 	go build
+install: build
+	go install
+docker-static-linux: clean deps build
+	CGO_ENABLED=0 go install -a -ldflags '-s'
 test:
 	go test ./...
 test-report: report-dir

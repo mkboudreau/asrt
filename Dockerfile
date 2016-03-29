@@ -1,16 +1,20 @@
 FROM alpine
 
-RUN mkdir -p /app
-WORKDIR /app
+ENV godir github.com/mkboudreau/asrt
+COPY . /go/src/$godir
 
 RUN apk update \
-	&& apk add go git ca-certificates   \
-   	&& mkdir /go && export GOPATH=/go  \	
-	&& CGO_ENABLED=0 go get -a -ldflags '-s' github.com/mkboudreau/asrt  \
+	&& apk add make go git ca-certificates   \
+   	&& export GOPATH=/go  \	
+	&& cd /go/src/$godir \
+	&& make docker-static-linux \
+	&& CGO_ENABLED=0 go install -a -ldflags '-s' github.com/mkboudreau/asrt  \
 	&& mv /go/bin/asrt /usr/local/bin/asrt \
   	&& rm -rf /go*  \
-  	&& apk del --purge go git 
+  	&& apk del --purge make go git 
 
+RUN mkdir -p /app
+WORKDIR /app
 ONBUILD COPY . /app
 
 ENTRYPOINT [ "/usr/local/bin/asrt" ]
