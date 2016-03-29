@@ -30,6 +30,10 @@ func (tc *targetFromFile) GetCommandFlags() []cli.Flag {
 			Usage: "Use file with list of URLs, HTTP Methods, and optional HTTP Headers",
 			Value: "",
 		},
+		cli.BoolFlag{
+			Name:  "no-environment",
+			Usage: "Turn off environment substitution in target files.",
+		},
 	}
 }
 
@@ -40,16 +44,17 @@ func (tc *targetFromFile) GetTargets(c *cli.Context) ([]*config.Target, error) {
 	}
 
 	timeout := config.GetTimeDurationConfig(c, "timeout")
+	turnOffEnvExpansion := c.Bool("no-environment")
 
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	return tc.targetsFromReaderWithTimeout(file, timeout)
+	return tc.targetsFromReaderWithTimeout(file, timeout, turnOffEnvExpansion)
 }
 
-func (tc *targetFromFile) targetsFromReaderWithTimeout(reader io.Reader, timeout time.Duration) ([]*config.Target, error) {
+func (tc *targetFromFile) targetsFromReaderWithTimeout(reader io.Reader, timeout time.Duration, noEnv bool) ([]*config.Target, error) {
 	var targets []*config.Target
 	r := bufio.NewReader(reader)
 	for {
@@ -68,6 +73,10 @@ func (tc *targetFromFile) targetsFromReaderWithTimeout(reader io.Reader, timeout
 		} else if len(line) == 0 {
 			// ignore
 			continue
+		}
+
+		if !noEnv {
+			line = os.ExpandEnv(line)
 		}
 
 		t, tErr := config.ParseTarget(line)
