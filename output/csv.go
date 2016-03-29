@@ -15,7 +15,7 @@ func NewCsvResultFormatter(m *ResultFormatModifiers) *CsvResultFormatter {
 }
 
 func (rf *CsvResultFormatter) Header() io.Reader {
-	if !rf.Modifiers.Quiet {
+	if !rf.Modifiers.NoHeader {
 		if rf.Modifiers.Markdown {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader("*RESULT*,*COUNT*\n")
@@ -40,7 +40,7 @@ func (rf *CsvResultFormatter) Header() io.Reader {
 }
 
 func (rf *CsvResultFormatter) Footer() io.Reader {
-	if rf.Modifiers.Quiet {
+	if rf.Modifiers.NoHeader {
 		return strings.NewReader("")
 	}
 	return strings.NewReader("\n")

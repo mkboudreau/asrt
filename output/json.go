@@ -44,7 +44,7 @@ func (rf *JsonResultFormatter) Footer() io.Reader {
 }
 
 func (rf *JsonResultFormatter) AggregateReader(results []*Result) io.Reader {
-	if rf.Modifiers.Quiet {
+	if rf.Modifiers.NoHeader {
 		return rf.getReaderForInterface(newAggregateQuietResult(results))
 	} else {
 		return rf.getReaderForInterface(newAggregateResult(results))
@@ -52,7 +52,7 @@ func (rf *JsonResultFormatter) AggregateReader(results []*Result) io.Reader {
 }
 
 func (rf *JsonResultFormatter) Reader(result *Result) io.Reader {
-	if rf.Modifiers.Quiet {
+	if rf.Modifiers.NoHeader {
 		return rf.getReaderForInterface(newQuietResult(result))
 	} else {
 		return rf.getReaderForInterface(result)

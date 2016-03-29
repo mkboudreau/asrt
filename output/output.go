@@ -54,7 +54,7 @@ type ResultFormatter interface {
 type ResultFormatModifiers struct {
 	Pretty    bool
 	Aggregate bool
-	Quiet     bool
+	NoHeader  bool
 	Markdown  bool
 }
 

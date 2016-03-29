@@ -8,16 +8,41 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-func GetUpperOrDefault(val string, def interface{}) string {
+func GetOutputFormatOrDefault(val string, defaultFormat OutputFormat) OutputFormat {
 	v := strings.ToUpper(val)
-	if v == "" {
-		if tmp, ok := def.(string); !ok {
-			return ""
-		} else {
-			v = tmp
-		}
+	if strings.HasPrefix(v, string(FormatCSV)) {
+		return FormatCSV
+	} else if strings.HasPrefix(v, string(FormatJSON)) {
+		return FormatJSON
+	} else if strings.HasPrefix(v, string(FormatTAB)) {
+		return FormatTAB
+	} else if strings.HasPrefix(v, string(FormatTEMPLATE)) {
+		return FormatTEMPLATE
+	} else {
+		return defaultFormat
 	}
-	return v
+}
+
+func GetMarkdownOptionOrDefault(val string, defaultBoolean bool) bool {
+	v := strings.ToUpper(val)
+	if strings.Contains(v, "-MD") {
+		return true
+	} else {
+		return defaultBoolean
+	}
+}
+
+func GetPrettyOptionOrDefault(val string, defaultBoolean bool) bool {
+	v := strings.ToUpper(val)
+	if GetMarkdownOptionOrDefault(val, false) {
+		return false //markdown takes precedence over color options
+	} else if strings.Contains(v, "-NO-COLOR") {
+		return false
+	} else if strings.Contains(v, "-COMPACT") {
+		return false
+	} else {
+		return defaultBoolean
+	}
 }
 
 func GetTimeDurationConfig(c *cli.Context, key string) time.Duration {

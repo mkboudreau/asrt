@@ -20,7 +20,7 @@ var (
 	ErrInvalidFormat              = errors.New(fmt.Sprintf("Output format unknown. Valid formats are %v", ValidFormats))
 )
 
-var ValidFormats = []string{"CSV", "TAB", "JSON"}
+var ValidFormats = []string{"csv", "csv-md", "csv-no-color", "tab", "tab-md", "tab-no-color", "json", "json-compact", "template={{...}}"}
 var ValidMethods = []string{"GET", "PUT", "POST", "DELETE", "HEAD", "PATCH"}
 
 var DefaultHttpStatuses = map[string]int{
@@ -32,44 +32,46 @@ var DefaultHttpStatuses = map[string]int{
 	string(MethodPatch):  200,
 }
 
+type OutputFormat string
+
 const (
-	FormatCSV  OutputFormat = "CSV"
-	FormatTAB               = "TAB"
-	FormatJSON              = "JSON"
+	FormatCSV      OutputFormat = "CSV"
+	FormatTAB                   = "TAB"
+	FormatJSON                  = "JSON"
+	FormatTEMPLATE              = "TEMPLATE"
 )
+
+const FormatOptionTemplatePrefix string = "TEMPLATE="
 
 type Configuration struct {
 	context         *cli.Context
 	CommandName     string
 	Rate            time.Duration
+	FormatString    string
 	Output          OutputFormat
 	Pretty          bool
 	AggregateOutput bool
 	Quiet           bool
-	Quieter         bool
+	NoHeader        bool
 	Markdown        bool
 	FailuresOnly    bool
 	Workers         int
 	Targets         []*Target
 }
 
-type OutputFormat string
-
 func GetConfiguration(c *cli.Context) (*Configuration, error) {
 	config := &Configuration{context: c, CommandName: c.Command.Name, Targets: make([]*Target, 0)}
 
-	config.Pretty = c.Bool("pretty")
 	config.AggregateOutput = c.Bool("aggregate")
+	config.NoHeader = c.Bool("no-header")
 	config.Quiet = c.Bool("quiet")
-	config.Quieter = c.Bool("quieter")
-	config.Markdown = c.Bool("markdown")
 	config.Workers = c.Int("workers")
 	config.FailuresOnly = c.Bool("failures-only")
 
-	config.Output = OutputFormat(GetUpperOrDefault(c.String("format"), FormatTAB))
-	if !validateOutput(string(config.Output)) {
-		return nil, ErrInvalidFormat
-	}
+	config.FormatString = c.String("format")
+	config.Output = GetOutputFormatOrDefault(config.FormatString, FormatTAB)
+	config.Pretty = GetPrettyOptionOrDefault(config.FormatString, true)
+	config.Markdown = GetMarkdownOptionOrDefault(config.FormatString, false)
 
 	config.Rate = GetTimeDurationConfig(c, "rate")
 
@@ -85,26 +87,11 @@ func GetConfiguration(c *cli.Context) (*Configuration, error) {
 	return config, nil
 }
 
-func validateOutput(output string) bool {
-	switch {
-	case output == string(FormatJSON):
-		return true
-	case output == string(FormatCSV):
-		return true
-	case output == string(FormatTAB):
-		return true
-	case output == "":
-		return true
-	default:
-		return false
-	}
-}
-
 func (config *Configuration) ResultFormatter() output.ResultFormatter {
 	modifiers := &output.ResultFormatModifiers{
 		Pretty:    config.Pretty,
 		Aggregate: config.AggregateOutput,
-		Quiet:     config.Quiet,
+		NoHeader:  config.NoHeader,
 		Markdown:  config.Markdown,
 	}
 
@@ -115,6 +102,8 @@ func (config *Configuration) ResultFormatter() output.ResultFormatter {
 		return output.NewCsvResultFormatter(modifiers)
 	case config.Output == FormatTAB:
 		return output.NewTabResultFormatter(modifiers)
+	case config.Output == FormatTEMPLATE:
+		return output.NewTemplateResultFormatter(config.FormatString, modifiers)
 	}
 
 	return nil

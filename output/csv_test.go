@@ -64,43 +64,43 @@ var csvTestSet = []*resultFormatTestCase{
 	{
 		expect:    "[ok],www",
 		results:   []*Result{NewResult(true, nil, "200", "200", "www", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    "[!ok],www",
 		results:   []*Result{NewResult(false, nil, "201", "200", "www", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    "[err],www",
 		results:   []*Result{NewResult(false, errors.New("hi"), "200", "", "www", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    "*[!ok]*,abc",
 		results:   []*Result{NewResult(false, nil, "400", "500", "abc", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true, Markdown: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true, Markdown: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    fmt.Sprintf("%v[ok]%v,abc", colorGreen, colorReset),
 		results:   []*Result{NewResult(true, nil, "500", "500", "abc", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true, Pretty: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true, Pretty: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    fmt.Sprintf("%v[!ok]%v,abc", colorRed, colorReset),
 		results:   []*Result{NewResult(false, nil, "400", "500", "abc", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true, Pretty: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true, Pretty: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    fmt.Sprintf("%v[err]%v,abc", colorRed, colorReset),
 		results:   []*Result{NewResult(false, fmt.Errorf("HELLO"), "500", "", "abc", "")},
-		modifiers: &ResultFormatModifiers{Quiet: true, Pretty: true},
+		modifiers: &ResultFormatModifiers{NoHeader: true, Pretty: true},
 		format:    csvFormat,
 	},
 	{
@@ -130,19 +130,19 @@ var csvTestSet = []*resultFormatTestCase{
 	{
 		expect:    fmt.Sprintf("*[ok]*,abcdxxx"),
 		results:   []*Result{NewResult(true, nil, "334", "334", "abcdxxx", "")},
-		modifiers: &ResultFormatModifiers{Markdown: true, Pretty: true, Quiet: true},
+		modifiers: &ResultFormatModifiers{Markdown: true, Pretty: true, NoHeader: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    fmt.Sprintf("*[!ok]*,zzz"),
 		results:   []*Result{NewResult(false, nil, "300", "333", "zzz", "")},
-		modifiers: &ResultFormatModifiers{Markdown: true, Pretty: true, Quiet: true},
+		modifiers: &ResultFormatModifiers{Markdown: true, Pretty: true, NoHeader: true},
 		format:    csvFormat,
 	},
 	{
 		expect:    fmt.Sprintf("*[err]*,abcd"),
 		results:   []*Result{NewResult(false, fmt.Errorf("ABC"), "335", "", "abcd", "")},
-		modifiers: &ResultFormatModifiers{Markdown: true, Pretty: true, Quiet: true},
+		modifiers: &ResultFormatModifiers{Markdown: true, Pretty: true, NoHeader: true},
 		format:    csvFormat,
 	},
 }

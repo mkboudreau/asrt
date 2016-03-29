@@ -17,33 +17,37 @@ This tool is simple. Just dive in and start using it.
 
 `asrt status www.yahoo.com`
 
-- Add pretty printing
-
-`asrt status -p www.yahoo.com`
-
 - Refresh every 5 seconds
 
-`asrt dashboard -p -r 5s www.yahoo.com`
+`asrt dashboard -r 5s www.yahoo.com`
 
 - Change format to csv
 
-`asrt status -p -fmt csv www.yahoo.com`
+`asrt status -fmt csv www.yahoo.com`
+
+- Change format to csv with markdown formatting
+
+`asrt status -fmt csv-md www.yahoo.com`
+
+- Change format to csv with no color 
+
+`asrt status -fmt csv-no-color www.yahoo.com`
 
 - Change format to json
 
-`asrt status -p -fmt json www.yahoo.com`
+`asrt status -fmt json www.yahoo.com`
 
-- Add a site to the list and pretty print json
+- Add a site to the list and change format to compact json
 
-`asrt status -p -fmt json www.yahoo.com www.google.com`
+`asrt status -fmt json-compact www.yahoo.com www.google.com`
 
 - Read from a file and pretty print json
 
 `asrt status -p -fmt json -f sites.list`
 
-- Read from a file and refresh every 1 minute with pretty print json
+- Read from a file and refresh every 1 minute with json
 
-`asrt dashboard -p -fmt json -r 1m -f sites.list`
+`asrt dashboard -fmt json -r 1m -f sites.list`
 
 - Read from a file and expose online with data refresh every 1 minute
 
@@ -76,11 +80,10 @@ www.yahoo.com|GET|200
 - `--failures-only`: only submits data to the writer upon failure. Useful when using something like slack since you may only want to perform an http.POST upon a failure.
 
 #### Output-related Options
-- `-fmt` or `--format`: the format to be used for output. valid values are CSV,TAB,JSON. default is TAB.
-- `-q` or `--quiet`: minimizes the response and contains no header nor footer.
-- `-qq` or `--quieter`: turns off standard output, superceding -q. useful for scripts.
-- `-p` or `--pretty`: makes response have some formatting using escape codes. Mutually exclusive with markdown.
-- `-md` or `--markdown`: makes response have some formatting using markdown. Mutually exclusive with pretty.
+- `-fmt` or `--format`: the format to be used for output. valid values are: 
+	CSV, CSV-MD, CSV-NO-COLOR, TAB, TAB-MD, TAB-NO-COLOR, JSON, JSON-COMPACT, TEMPLATE="{{...}}}. default is TAB.
+- `--no-headers`: minimizes the response and contains no header nor footer.
+- `-q` or `--quiet`: turns off standard output, useful for scripts.
 - `--slack-url`: setting this parameter enables slack integration using incoming webhook url specified.
 - `--slack-user`: overrides the user this tool will post as to slack. only works if slack-url is specified.
 - `--slack-channel`: overrides the channel this tool will post to on slack. only works if slack-url is specified.

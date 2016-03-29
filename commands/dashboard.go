@@ -53,7 +53,9 @@ func printDashboard(c *config.Configuration) {
 	} else {
 		timeReader = output.NewTimeReader(time.Now())
 	}
-	writer.WriteToConsole(timeReader)
+	if !c.Quiet {
+		writer.WriteToConsole(timeReader)
+	}
 
 	targetChannel := make(chan *config.Target, c.Workers)
 	resultChannel := make(chan *output.Result)

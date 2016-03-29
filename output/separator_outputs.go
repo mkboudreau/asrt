@@ -10,17 +10,17 @@ func getResultStringWithSeparator(result *Result, modifiers *ResultFormatModifie
 	var s string
 
 	switch {
-	case modifiers.Markdown && !modifiers.Quiet:
+	case modifiers.Markdown && !modifiers.NoHeader:
 		s = separatorResultForMarkdown(result, separator)
-	case modifiers.Markdown && modifiers.Quiet:
+	case modifiers.Markdown && modifiers.NoHeader:
 		s = separatorResultForQuietMarkdown(result, separator)
-	case !modifiers.Pretty && !modifiers.Quiet:
+	case !modifiers.Pretty && !modifiers.NoHeader:
 		s = separatorResult(result, separator)
-	case modifiers.Pretty && !modifiers.Quiet:
+	case modifiers.Pretty && !modifiers.NoHeader:
 		s = separatorResultForPretty(result, separator)
-	case !modifiers.Pretty && modifiers.Quiet:
+	case !modifiers.Pretty && modifiers.NoHeader:
 		s = separatorResultForQuiet(result, separator)
-	case modifiers.Pretty && modifiers.Quiet:
+	case modifiers.Pretty && modifiers.NoHeader:
 		s = separatorResultForQuietPretty(result, separator)
 	}
 
@@ -31,17 +31,17 @@ func getResultStringAggregateWithSeparator(results []*Result, modifiers *ResultF
 	var s string
 
 	switch {
-	case modifiers.Markdown && !modifiers.Quiet:
+	case modifiers.Markdown && !modifiers.NoHeader:
 		s = separatorAggregateResultForMarkdown(results, separator)
-	case modifiers.Markdown && modifiers.Quiet:
+	case modifiers.Markdown && modifiers.NoHeader:
 		s = separatorAggregateResultForQuietMarkdown(results, separator)
-	case !modifiers.Pretty && !modifiers.Quiet:
+	case !modifiers.Pretty && !modifiers.NoHeader:
 		s = separatorAggregateResult(results, separator)
-	case modifiers.Pretty && !modifiers.Quiet:
+	case modifiers.Pretty && !modifiers.NoHeader:
 		s = separatorAggregateResultForPretty(results, separator)
-	case !modifiers.Pretty && modifiers.Quiet:
+	case !modifiers.Pretty && modifiers.NoHeader:
 		s = separatorAggregateResultForQuiet(results, separator)
-	case modifiers.Pretty && modifiers.Quiet:
+	case modifiers.Pretty && modifiers.NoHeader:
 		s = separatorAggregateResultForQuietPretty(results, separator)
 	}
 

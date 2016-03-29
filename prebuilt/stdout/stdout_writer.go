@@ -22,7 +22,7 @@ func (wc *stdoutWriterConfigurer) String() string {
 func (wc *stdoutWriterConfigurer) GetCommandFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name:  "quieter, qq",
+			Name:  "quiet, q",
 			Usage: "Turns off standard output",
 		},
 	}

@@ -15,7 +15,7 @@ func NewTabResultFormatter(m *ResultFormatModifiers) *TabResultFormatter {
 }
 
 func (rf *TabResultFormatter) Header() io.Reader {
-	if !rf.Modifiers.Quiet {
+	if !rf.Modifiers.NoHeader {
 		if rf.Modifiers.Markdown {
 			if rf.Modifiers.Aggregate {
 				return strings.NewReader("*RESULT*\t*COUNT*\n")
@@ -40,7 +40,7 @@ func (rf *TabResultFormatter) Header() io.Reader {
 }
 
 func (rf *TabResultFormatter) Footer() io.Reader {
-	if rf.Modifiers.Quiet {
+	if rf.Modifiers.NoHeader {
 		return strings.NewReader("")
 	}
 	return strings.NewReader("\n")
