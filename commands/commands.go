@@ -27,23 +27,13 @@ var commonFlags = []cli.Flag{
 		Usage: fmt.Sprint("Output format. Valid values:", config.ValidFormats),
 		Value: "tab",
 	},
-	/*
-		cli.BoolFlag{
-			Name:  "pretty, p",
-			Usage: "Pretty Print the Output. Note: this is mutually exclusive with the pretty option. markdown always take precedence over pretty",
-		},
-		cli.BoolFlag{
-			Name:  "markdown, md",
-			Usage: "Markdown Output. Note: this is mutually exclusive with the pretty option. markdown always take precedence over pretty",
-		},
-	*/
 	cli.BoolFlag{
 		Name:  "aggregate, a",
 		Usage: "Aggregate all results into a single result",
 	},
 	cli.BoolFlag{
 		Name:  "no-headers",
-		Usage: "Quiet results into just the statuses. Usually useful in aggregate -qa",
+		Usage: "Quiet results into just the statuses. Usually useful in aggregate ",
 	},
 	cli.IntFlag{
 		Name:  "workers, w",

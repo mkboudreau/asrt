@@ -29,7 +29,7 @@ func (wc *stdoutWriterConfigurer) GetCommandFlags() []cli.Flag {
 }
 
 func (wc *stdoutWriterConfigurer) GetWriter(c *cli.Context) io.Writer {
-	if c.Bool("quieter") {
+	if c.Bool("quiet") {
 		return nil
 	}
 
