@@ -4,7 +4,7 @@ ENV godir github.com/mkboudreau/asrt
 COPY . /go/src/$godir
 
 RUN apk update \
-	&& apk add make go git ca-certificates   \
+	&& apk add make go git curl ca-certificates   \
    	&& export GOPATH=/go  \	
 	&& cd /go/src/$godir \
 	&& make docker-static-linux \
