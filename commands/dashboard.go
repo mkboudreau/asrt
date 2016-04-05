@@ -8,6 +8,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/config"
+	"github.com/mkboudreau/asrt/execution"
 	"github.com/mkboudreau/asrt/output"
 	"github.com/mkboudreau/asrt/writer"
 )
@@ -20,11 +21,12 @@ func cmdDashboard(ctx *cli.Context) {
 		log.Fatalln("Exiting....")
 	}
 
-	printDashboard(c)
-	loopDashboard(c)
+	executor := execution.NewExecutor(c.AggregateOutput, c.FailuresOnly, true, c.ResultFormatter(), c.Writer(), c.Workers)
+	printDashboard(c, executor)
+	loopDashboard(c, executor)
 }
 
-func loopDashboard(c *config.Configuration) {
+func loopDashboard(c *config.Configuration, executor *execution.Executor) {
 	done := make(chan struct{})
 	fn := func() {
 		close(done)
@@ -37,14 +39,19 @@ func loopDashboard(c *config.Configuration) {
 	for {
 		select {
 		case <-ticker.C:
-			printDashboard(c)
+			printDashboard(c, executor)
 		case <-done:
 			return
 		}
 	}
 }
 
-func printDashboard(c *config.Configuration) {
+func printDashboard(c *config.Configuration, executor *execution.Executor) {
+	clearAndWriteHeader(c)
+	executor.Execute(c.Targets)
+}
+
+func clearAndWriteHeader(c *config.Configuration) {
 	writer.ClearConsole()
 
 	var timeReader io.Reader
@@ -55,24 +62,5 @@ func printDashboard(c *config.Configuration) {
 	}
 	if !c.Quiet {
 		writer.WriteToConsole(timeReader)
-	}
-
-	targetChannel := make(chan *config.Target, c.Workers)
-	resultChannel := make(chan *output.Result)
-
-	go processTargets(targetChannel, resultChannel)
-
-	for _, target := range c.Targets {
-		targetChannel <- target
-	}
-	close(targetChannel)
-
-	formatter := c.ResultFormatter()
-	writer := c.Writer()
-
-	if c.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter, writer, c.FailuresOnly)
-	} else {
-		processEachResult(resultChannel, formatter, writer, c.FailuresOnly)
 	}
 }

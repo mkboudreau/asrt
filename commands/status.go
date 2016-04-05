@@ -8,7 +8,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/config"
-	"github.com/mkboudreau/asrt/output"
+	"github.com/mkboudreau/asrt/execution"
 )
 
 func cmdStatus(ctx *cli.Context) {
@@ -27,25 +27,9 @@ func cmdStatus(ctx *cli.Context) {
 		log.Fatalln("Exiting....")
 	}
 
+	executor := execution.NewExecutor(c.AggregateOutput, c.FailuresOnly, true, c.ResultFormatter(), c.Writer(), c.Workers)
 	exitStatus := retryUntil(duration, func() int {
-		targetChannel := make(chan *config.Target, c.Workers)
-		resultChannel := make(chan *output.Result)
-
-		go processTargets(targetChannel, resultChannel)
-
-		for _, target := range c.Targets {
-			targetChannel <- target
-		}
-		close(targetChannel)
-
-		formatter := c.ResultFormatter()
-		writer := c.Writer()
-
-		if c.AggregateOutput {
-			return processAggregatedResult(resultChannel, formatter, writer, c.FailuresOnly)
-		} else {
-			return processEachResult(resultChannel, formatter, writer, c.FailuresOnly)
-		}
+		return executor.Execute(c.Targets)
 	})
 
 	os.Exit(exitStatus)

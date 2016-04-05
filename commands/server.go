@@ -10,7 +10,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/mkboudreau/asrt/config"
-	"github.com/mkboudreau/asrt/output"
+	"github.com/mkboudreau/asrt/execution"
 )
 
 const (
@@ -32,7 +32,9 @@ func cmdServer(ctx *cli.Context) {
 		log.Fatalln("Exiting....")
 	}
 
-	asrt := NewAsrtHandler(c)
+	executor := execution.NewExecutor(c.AggregateOutput, c.FailuresOnly, true, c.ResultFormatter(), c.Writer(), c.Workers)
+
+	asrt := NewAsrtHandler(c, executor)
 	asrt.refreshServerCache()
 	go asrt.loopServerCacheRefresh()
 
@@ -45,13 +47,14 @@ func cmdServer(ctx *cli.Context) {
 
 type AsrtHandler struct {
 	configuration *config.Configuration
+	executor      *execution.Executor
 	cachedContent []byte
 	buffer        *bytes.Buffer
 	mutex         *sync.RWMutex
 }
 
-func NewAsrtHandler(cfg *config.Configuration) *AsrtHandler {
-	return &AsrtHandler{configuration: cfg, mutex: &sync.RWMutex{}}
+func NewAsrtHandler(cfg *config.Configuration, executor *execution.Executor) *AsrtHandler {
+	return &AsrtHandler{configuration: cfg, executor: executor, mutex: &sync.RWMutex{}}
 }
 
 func serveStaticWebFiles(w http.ResponseWriter, r *http.Request) {
@@ -97,24 +100,7 @@ func (asrt *AsrtHandler) loopServerCacheRefresh() {
 }
 
 func (asrt *AsrtHandler) refreshServerCache() {
-	targetChannel := make(chan *config.Target, asrt.configuration.Workers)
-	resultChannel := make(chan *output.Result)
-
-	go processTargets(targetChannel, resultChannel)
-
-	for _, target := range asrt.configuration.Targets {
-		targetChannel <- target
-	}
-	close(targetChannel)
-
-	formatter := asrt.configuration.ResultFormatter()
-	writer := asrt.configuration.WriterWithWriters(asrt)
-
-	if asrt.configuration.AggregateOutput {
-		processAggregatedResult(resultChannel, formatter, writer, asrt.configuration.FailuresOnly)
-	} else {
-		processEachResult(resultChannel, formatter, writer, asrt.configuration.FailuresOnly)
-	}
+	asrt.executor.Execute(asrt.configuration.Targets)
 }
 
 func (asrt *AsrtHandler) Write(p []byte) (n int, err error) {
