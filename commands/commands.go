@@ -66,7 +66,12 @@ func getDashboardFlags() []cli.Flag {
 			Name:  "rate, r",
 			Usage: "Rate between refreshes of statuses. Only effective for dashboard settings. 0 = no refresh. Format is Golang time.Duration.",
 			Value: "30s",
-		})
+		},
+		cli.BoolFlag{
+			Name:  "state-change-only, s",
+			Usage: "Only report on state changes. This is useful for long running jobs, especially when coupled with notification to slack or something similar.",
+		},
+	)
 }
 
 func getServerFlags() []cli.Flag {

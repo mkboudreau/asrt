@@ -18,6 +18,8 @@ type Executor struct {
 	ReportOnlyStateChanges bool
 	OutputFormatter        output.ResultFormatter
 	OutputWriter           io.Writer
+	lastestState           map[stateKey]stateValue
+	autoclose              bool
 	resultChannel          chan *output.Result
 }
 
@@ -29,10 +31,20 @@ func NewExecutor(isAggregate, onlyFailures, onlyStateChange bool, formatter outp
 		ReportOnlyStateChanges: onlyStateChange,
 		OutputFormatter:        formatter,
 		OutputWriter:           writer,
+		lastestState:           make(map[stateKey]stateValue),
+		autoclose:              true,
 	}
 }
 
-func (executor *Executor) Execute(incomingTargets []*config.Target) int {
+func (executor *Executor) SetAutoClose() {
+	executor.autoclose = true
+}
+
+func (executor *Executor) SetNoAutoClose() {
+	executor.autoclose = false
+}
+
+func (executor Executor) Execute(incomingTargets []*config.Target) int {
 	if executor.resultChannel != nil {
 		if _, ok := <-executor.resultChannel; !ok {
 			close(executor.resultChannel)
@@ -88,10 +100,17 @@ func (executor *Executor) processEachResult(resultChannel <-chan *output.Result)
 		if r.Success && executor.ReportOnlyFailures {
 			continue
 		}
+		if executor.ReportOnlyStateChanges {
+			if !executor.didStateChange(r) {
+				executor.updateState(r)
+				continue
+			}
+			executor.updateState(r)
+		}
+
 		if counter == 0 {
 			writer.WriteToWriter(w, formatter.Header())
-		}
-		if counter != 0 {
+		} else if counter != 0 {
 			writer.WriteToWriter(w, formatter.RecordSeparator())
 		}
 		reader := formatter.Reader(r)
@@ -104,7 +123,10 @@ func (executor *Executor) processEachResult(resultChannel <-chan *output.Result)
 	if counter > 0 {
 		writer.WriteToWriter(w, formatter.Footer())
 	}
-	writer.DoneWithWriter(w)
+
+	if executor.autoclose {
+		writer.DoneWithWriter(w)
+	}
 
 	return exitStatus
 }
@@ -128,7 +150,47 @@ func (executor *Executor) processAggregatedResult(resultChannel <-chan *output.R
 		writer.WriteToWriter(w, formatter.Footer())
 	}
 
-	writer.DoneWithWriter(w)
+	if executor.autoclose {
+		writer.DoneWithWriter(w)
+	}
 
 	return exitStatus
+}
+
+func (executor *Executor) didStateChange(result *output.Result) bool {
+	k, v := extractStateKeyValueFromResult(result)
+
+	lv, ok := executor.lastestState[*k]
+	if !ok {
+		return true
+	}
+
+	return *v != lv
+}
+
+func (executor *Executor) updateState(result *output.Result) {
+	k, v := extractStateKeyValueFromResult(result)
+	executor.lastestState[*k] = *v
+}
+
+type stateKey struct {
+	Url, Label string
+}
+
+type stateValue struct {
+	Success  bool
+	Error    error
+	Expected string
+	Actual   string
+}
+
+func extractStateKeyValueFromResult(result *output.Result) (*stateKey, *stateValue) {
+	k := &stateKey{Url: result.Url, Label: result.Label}
+	v := &stateValue{
+		Success:  result.Success,
+		Error:    result.Error,
+		Expected: result.Expected,
+		Actual:   result.Actual,
+	}
+	return k, v
 }

@@ -21,7 +21,7 @@ func cmdDashboard(ctx *cli.Context) {
 		log.Fatalln("Exiting....")
 	}
 
-	executor := execution.NewExecutor(c.AggregateOutput, c.FailuresOnly, true, c.ResultFormatter(), c.Writer(), c.Workers)
+	executor := execution.NewExecutor(c.AggregateOutput, c.FailuresOnly, c.StateChangeOnly, c.ResultFormatter(), c.Writer(), c.Workers)
 	printDashboard(c, executor)
 	loopDashboard(c, executor)
 }

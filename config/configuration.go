@@ -55,6 +55,7 @@ type Configuration struct {
 	NoHeader        bool
 	Markdown        bool
 	FailuresOnly    bool
+	StateChangeOnly bool
 	Workers         int
 	Targets         []*Target
 }
@@ -67,6 +68,7 @@ func GetConfiguration(c *cli.Context) (*Configuration, error) {
 	config.Quiet = c.Bool("quiet")
 	config.Workers = c.Int("workers")
 	config.FailuresOnly = c.Bool("failures-only")
+	config.StateChangeOnly = c.Bool("state-change-only")
 
 	config.FormatString = c.String("format")
 	config.Output = GetOutputFormatOrDefault(config.FormatString, FormatTAB)
