@@ -16,7 +16,7 @@ func TestFileReaderWithEmptyLines(t *testing.T) {
 	`
 	testReader := strings.NewReader(testLine)
 
-	targets, err := tc.targetsFromReaderWithTimeout(testReader, testTimeoutDurationOneMinute)
+	targets, err := tc.targetsFromReaderWithTimeout(testReader, testTimeoutDurationOneMinute, false)
 
 	if err != nil {
 		t.Fail()
@@ -39,7 +39,7 @@ func TestFileReaderWithComment(t *testing.T) {
 	`
 	testReader := strings.NewReader(testLine)
 
-	targets, err := tc.targetsFromReaderWithTimeout(testReader, testTimeoutDurationOneMinute)
+	targets, err := tc.targetsFromReaderWithTimeout(testReader, testTimeoutDurationOneMinute, false)
 
 	if err != nil {
 		t.Fail()
