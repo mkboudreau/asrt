@@ -102,6 +102,7 @@ func (executor *Executor) processEachResult(resultChannel <-chan *output.Result)
 		}
 		if executor.ReportOnlyStateChanges {
 			if !executor.didStateChange(r) {
+				//no change... continue
 				executor.updateState(r)
 				continue
 			}
@@ -179,7 +180,6 @@ type stateKey struct {
 
 type stateValue struct {
 	Success  bool
-	Error    error
 	Expected string
 	Actual   string
 }
@@ -188,7 +188,6 @@ func extractStateKeyValueFromResult(result *output.Result) (*stateKey, *stateVal
 	k := &stateKey{Url: result.Url, Label: result.Label}
 	v := &stateValue{
 		Success:  result.Success,
-		Error:    result.Error,
 		Expected: result.Expected,
 		Actual:   result.Actual,
 	}

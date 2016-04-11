@@ -18,3 +18,4 @@ WORKDIR /app
 ONBUILD COPY . /app
 
 ENTRYPOINT [ "/usr/local/bin/asrt" ]
+

@@ -13,75 +13,74 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type execTestCase struct {
-	checkStatusCode  int
-	expectedExitCode int
-	expectedSuccess  bool
-}
-
-var executorTypicalTestCases = []execTestCase{
-	{200, 0, true},
-	{300, 1, false},
-	{400, 1, false},
-}
-
 func TestExecutorTypical(t *testing.T) {
+	var statusCodesToTest = getIntsInRange(100, 599)
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer testServer.Close()
 
-	for _, test := range executorTypicalTestCases {
+	for _, statusCodeTest := range statusCodesToTest {
 		writer := new(bytes.Buffer)
 		formatter := &testResultFormatter{}
 		exec := NewExecutor(false, false, false, formatter, writer, 1)
-		target, _ := config.NewTarget("abc", testServer.URL, config.MethodGet, test.checkStatusCode)
-		targets := []*config.Target{target}
-
-		actualExitCode := exec.Execute(targets)
-		actualResult := formatter.lastResult
-
-		assert.Equal(t, test.expectedExitCode, actualExitCode)
-
-		assert.NotNil(t, actualResult)
-		assert.Equal(t, test.expectedSuccess, actualResult.Success)
-	}
-}
-
-var executorOnlyFailureTestCases = []execTestCase{
-	{200, 0, true},
-	{300, 1, false},
-	{400, 1, false},
-}
-
-func TestExecutorOnlyFailure(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer testServer.Close()
-
-	for _, test := range executorOnlyFailureTestCases {
-		writer := new(bytes.Buffer)
-		formatter := &testResultFormatter{}
-		exec := NewExecutor(false, true, false, formatter, writer, 1)
-		target, _ := config.NewTarget("abc", testServer.URL, config.MethodGet, test.checkStatusCode)
+		target, _ := config.NewTarget("abc", testServer.URL, config.MethodGet, statusCodeTest)
 		targets := []*config.Target{target}
 
 		actualExitCode := exec.Execute(targets)
 		actualResult := formatter.lastResult
 		actualOutput := writer.String()
 
-		assert.Equal(t, test.expectedExitCode, actualExitCode)
-		if test.expectedSuccess {
-			assert.Empty(t, actualOutput)
-			assert.Nil(t, actualResult)
+		assert.NotEmpty(t, actualOutput)
+		assert.NotNil(t, actualResult)
+
+		if statusCodeTest == 200 {
+			assert.Equal(t, 0, actualExitCode)
+			assert.True(t, actualResult.Success)
 		} else {
 			assert.NotEmpty(t, actualOutput)
 			assert.NotNil(t, actualResult)
+			assert.Equal(t, 1, actualExitCode)
+			assert.False(t, actualResult.Success)
 		}
+	}
+}
 
-		if actualResult != nil {
-			assert.Equal(t, test.expectedSuccess, actualResult.Success)
+func getIntsInRange(begin, end int) []int {
+	var ints []int
+	for i := begin; i < end; i++ {
+		ints = append(ints, i)
+	}
+	return ints
+}
+
+func TestExecutorOnlyFailure(t *testing.T) {
+	var statusCodesToTest = getIntsInRange(100, 599)
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer testServer.Close()
+
+	for _, statusCodeTest := range statusCodesToTest {
+		writer := new(bytes.Buffer)
+		formatter := &testResultFormatter{}
+		exec := NewExecutor(false, true, false, formatter, writer, 1)
+		target, _ := config.NewTarget("abc", testServer.URL, config.MethodGet, statusCodeTest)
+		targets := []*config.Target{target}
+
+		actualExitCode := exec.Execute(targets)
+		actualResult := formatter.lastResult
+		actualOutput := writer.String()
+
+		if statusCodeTest == 200 {
+			assert.Empty(t, actualOutput)
+			assert.Nil(t, actualResult)
+			assert.Equal(t, 0, actualExitCode)
+		} else {
+			assert.NotEmpty(t, actualOutput)
+			assert.NotNil(t, actualResult)
+			assert.Equal(t, 1, actualExitCode)
+			assert.False(t, actualResult.Success)
 		}
 	}
 }
