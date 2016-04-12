@@ -1,7 +1,9 @@
 package execution
 
 import (
+	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -98,14 +100,17 @@ func (executor *Executor) processEachResult(resultChannel <-chan *output.Result)
 	w := executor.OutputWriter
 	for r := range resultChannel {
 		if r.Success && executor.ReportOnlyFailures {
+			executor.updateState(r)
 			continue
 		}
 		if executor.ReportOnlyStateChanges {
 			if !executor.didStateChange(r) {
 				//no change... continue
+				log.Printf("no change with result")
 				executor.updateState(r)
 				continue
 			}
+			log.Printf("found change with result, sending to writer")
 			executor.updateState(r)
 		}
 
@@ -163,7 +168,14 @@ func (executor *Executor) didStateChange(result *output.Result) bool {
 
 	lv, ok := executor.lastestState[*k]
 	if !ok {
+		log.Printf("Target %v First State Capture: %v", k, v)
 		return true
+	}
+
+	if *v != lv {
+		log.Printf("Target %v Changed from [ %v ] to [ %v ]", k, lv, *v)
+	} else {
+		log.Printf("Target %v No Change [ %v ] ", k, *v)
 	}
 
 	return *v != lv
@@ -178,10 +190,18 @@ type stateKey struct {
 	Url, Label string
 }
 
+func (s stateKey) String() string {
+	return fmt.Sprintf("Label: %v | URL: %v", s.Label, s.Url)
+}
+
 type stateValue struct {
 	Success  bool
 	Expected string
 	Actual   string
+}
+
+func (s stateValue) String() string {
+	return fmt.Sprintf("Success: %v | Expected: %v | Actual: %v", s.Success, s.Expected, s.Actual)
 }
 
 func extractStateKeyValueFromResult(result *output.Result) (*stateKey, *stateValue) {
